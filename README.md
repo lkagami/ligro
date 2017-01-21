@@ -3,6 +3,7 @@
 This software is available to you under the terms of the GPL-3.
 Software is created and maintained by Laboratorio de Sintese Organica Medicinal-LaSOM at
 Universidade Federal do Rio Grande do Sul.
+
 Contributors:
 
 Luciano Porto Kagami
