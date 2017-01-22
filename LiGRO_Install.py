@@ -195,7 +195,7 @@ if __name__ == '__main__':
             file.write(command40)
             file.close()
         else:
-            command10 = 'sudo {0} install gromacs'.format(dt)
+            pass
 
     def install_all():
         install_ambertools()
