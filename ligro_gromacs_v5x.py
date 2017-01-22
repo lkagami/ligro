@@ -1370,7 +1370,8 @@ if __name__ == '__main__':
     helpmenu.add_command(label="Help Index", command=help)
     helpmenu.add_command(label="About...", command=about)
     menubar.add_cascade(label="Help", menu=helpmenu)
-    img = Tkinter.PhotoImage(file='ic_launcher_.png')
+    path4 = path2 + '/ligro'
+    img = Tkinter.PhotoImage(file=path4 + '/ic_launcher_.png')
     root.tk.call('wm', 'iconphoto', root._w, img)
     root.config(menu=menubar)
     root.mainloop()

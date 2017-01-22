@@ -20,7 +20,6 @@ import os
 import shutil
 import webbrowser
 import tkMessageBox as mbox
-import tempfile
 import subprocess
 
 path2 = os.environ.get('HOME')
@@ -88,15 +87,13 @@ if __name__ == '__main__':
                 return False
         return True
 
+
     def install_ambertools():
         try:
             os.chdir(path)
         except:
             pass
         # verificar se AMBERTools esta instalado...
-        if is_tool('antechamber') == True:
-            pass
-        else:
             find1 = os.path.exists('AmberTools16.tar.bz2')
             if find1 == False:
                 mbox.showerror("Error", "AmberTools16.tar.bz2 file not found.")
@@ -121,11 +118,8 @@ if __name__ == '__main__':
             os.chdir(path2)
             with open('.bashrc', 'a') as file:
                 command40 = "source {0}/amber16/amber.sh".format(path2)
-            file.write(command40)
+                file.write(command40)
             file.close()
-
-
-
 
     def install_acpype():
         dist = str(distro_menu.getcurselection())
@@ -133,17 +127,12 @@ if __name__ == '__main__':
             dt = 'apt-get'
         elif dist == 'OpenSuse':
             dt = 'zypper'
-        if is_tool('acpype') == False:
-            command5 = 'sudo {0} install git'.format(dt)
-            os.system(command5)
             command6 = 'git clone https://github.com/t-/acpype.git'
             os.system(command6)
             path4 = path2 + '/acpype'
             os.chdir(path4)
             command7 = 'sudo ln -s $PWD/acpype.py /usr/local/bin/acpype'
             os.system(command7)
-        else:
-            pass
 
     def install_plip():
         dist = str(distro_menu.getcurselection())
@@ -151,22 +140,17 @@ if __name__ == '__main__':
             dt = 'apt-get'
         elif dist == 'OpenSuse':
             dt = 'zypper'
-        if is_tool('plip') == False:
-            command8='sudo {0} install python-openbabel git'.format(dt)
+            command8='sudo {0} install python-openbabel'.format(dt)
             os.system(command8)
             command9='git clone https://github.com/ssalentin/plip.git ~/pliptool'
             os.system(command9)
             os.chdir(path2)
             with open('.bashrc', 'a') as file:
                 command40 = "alias plip='{0}/pliptool/plip/plipcmd'".format(path2)
-            file.write(command40)
+                file.write(command40)
             file.close()
-        else: pass
 
     def install_gromacs():
-        if is_tool('mdrun') or is_tool('gmx') == True:
-            pass
-        else:
             dist = str(distro_menu.getcurselection())
             if dist == 'Ubuntu':
                 dt = 'apt-get'
@@ -175,33 +159,71 @@ if __name__ == '__main__':
             command10 = 'sudo {0} install gromacs'.format(dt)
             os.system(command10)
 
-    def install_ligro():
+    def install_ligro4x():
         dist = str(distro_menu.getcurselection())
         if dist == 'Ubuntu':
             dt = 'apt-get'
         elif dist == 'OpenSuse':
             dt = 'zypper'
-        command10='sudo {0} install python-webbroser python-tempfile python-matplotlib python-numpy pymol gedit'.format(dt)
+        command10='sudo {0} install python-matplotlib python-numpy pymol gedit'.format(dt)
         os.system(command10)
-        if is_tool('mdrun') == True:
-            with open('.bashrc', 'a') as file:
-                command40 = "alias ligro='python {0}/ligro/ligro_gromacs_v4x.py'".format(path2)
+        os.chdir(path2)
+        with open('.bashrc', 'a') as file:
+            command40 = "alias ligro='python {0}/ligro/ligro_gromacs_v4x.py'".format(path2)
             file.write(command40)
-            file.close()
+        file.close()
 
-        elif is_tool('gmx') == True:
-            with open('.bashrc', 'a') as file:
-                command40 = "alias ligro='python {0}/ligro/ligro_gromacs_v4x.py'".format(path2)
+
+    def install_ligro5x():
+        dist = str(distro_menu.getcurselection())
+        if dist == 'Ubuntu':
+            dt = 'apt-get'
+        elif dist == 'OpenSuse':
+            dt = 'zypper'
+        command10='sudo {0} install python-matplotlib python-numpy pymol gedit'.format(dt)
+        os.system(command10)
+        os.chdir(path2)
+        with open('.bashrc', 'a') as file:
+            command40 = "alias ligro='python {0}/ligro/ligro_gromacs_v5x.py'".format(path2)
             file.write(command40)
-            file.close()
-        else:
-            pass
+        file.close()
 
     def install_all():
-        install_ambertools()
-        install_acpype()
-        install_ligro()
+        dist = str(distro_menu.getcurselection())
+        if dist == 'Ubuntu':
+            dt = 'apt-get'
+        elif dist == 'OpenSuse':
+            dt = 'zypper'
+        command5 = 'sudo {0} install git'.format(dt)
+        os.system(command5)
+        command9 = 'git clone https://github.com/lkagami/ligro.git ~/ligro'
+        os.system(command9)
+        if is_tool('antechamber') == True:
+            pass
+        else:
+            install_ambertools()
+        if is_tool('acpype') == True:
+            pass
+        else:
+            install_acpype()
+        try:
+            os.stat(path2+'pliptool')
+        except:
+            install_plip()
+        if is_tool('mdrun') or is_tool('gmx') == True:
+            pass
+        else:
+            install_gromacs()
+        if is_tool('gmx') == False:
+            pass
+        else:
+            install_ligro5x()
+        if is_tool('mdrun') == False:
+            pass
+        else:
+            install_ligro4x()
         os.system('sudo rm -r {0}'.format(path))
+        os.system('source .bashrc')
         mbox.showinfo('Finish', 'Installation has finished, type ligro for to execute')
         sys.exit(0)
 
