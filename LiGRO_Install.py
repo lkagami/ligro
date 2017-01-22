@@ -23,13 +23,15 @@ import tkMessageBox as mbox
 import tempfile
 import subprocess
 
+path2 = os.environ.get('HOME')
+os.system('mkdir '+path2+'/ligro_temp')
 
 try:
-    path = tempfile.mkdtemp()
+    path=path2 + '/ligro_temp'
 
 except:
     pass
-path2 = os.environ.get('HOME')
+
 
 # Create root window.
 
@@ -92,7 +94,9 @@ if __name__ == '__main__':
         except:
             pass
         # verificar se AMBERTools esta instalado...
-        if is_tool('antechamber') == False:
+        if is_tool('antechamber') == True:
+            pass
+        else:
             find1 = os.path.exists('AmberTools16.tar.bz2')
             if find1 == False:
                 mbox.showerror("Error", "AmberTools16.tar.bz2 file not found.")
@@ -103,23 +107,24 @@ if __name__ == '__main__':
                     dt = 'apt-get'
                 elif dist == 'OpenSuse':
                     dt = 'zypper'
-                command0='sudo {0} install make csh flex gfortran g++ xorg-dev zlib1g-dev libbz2-dev patch python-tk python-matplotlib'.format(dt)
-                os.system(command0)
-                command1='tar xvfj AmberTools16.tar.bz2'
-                os.system(command1)
-                shutil.copy2(path+'/amber16', path2)
-                os.putenv('AMBERHOME',path2+'/amber16')
-                path3=path2+'/amber16'
-                os.chdir(path3)
-                command3='source amber.sh'
-                os.system(command3)
-                command4='make install'
-                os.system(command4)
-                os.chdir(path)
-                bashrc = open('.basrc', 'a')
-                bashrc.write('source amber.sh')
-                bashrc.close()
-        else: pass
+                os.system(
+                    'sudo {0} install make csh flex gfortran g++ xorg-dev zlib1g-dev libbz2-dev patch python-tk python-matplotlib'.format(
+                        dt))
+                os.system('tar xvfj AmberTools16.tar.bz2')
+            os.system('mv {0}/amber16 {1}'.format(path, path2))
+            os.putenv('AMBERHOME', path2 + '/amber16')
+            path3 = path2 + '/amber16'
+            os.chdir(path3)
+            os.system('./configure gnu')
+            os.system('source amber.sh')
+            os.system('make install')
+            os.chdir(path2)
+            with open('.bashrc', 'a') as file:
+                command40 = "source {0}/amber16/amber.sh".format(path2)
+            file.write(command40)
+            file.close()
+
+
 
 
     def install_acpype():
@@ -129,15 +134,16 @@ if __name__ == '__main__':
         elif dist == 'OpenSuse':
             dt = 'zypper'
         if is_tool('acpype') == False:
-            command5='sudo {0} install git'.format(dt)
+            command5 = 'sudo {0} install git'.format(dt)
             os.system(command5)
-            command6='git clone https://github.com/t-/acpype.git'
+            command6 = 'git clone https://github.com/t-/acpype.git'
             os.system(command6)
-            path4=path2+'/acpype-master'
+            path4 = path2 + '/acpype'
             os.chdir(path4)
-            command7='ln -s $PWD/acpype.py /usr/local/bin/acpype'
+            command7 = 'sudo ln -s $PWD/acpype.py /usr/local/bin/acpype'
             os.system(command7)
-        else: pass
+        else:
+            pass
 
     def install_plip():
         dist = str(distro_menu.getcurselection())
@@ -150,11 +156,24 @@ if __name__ == '__main__':
             os.system(command8)
             command9='git clone https://github.com/ssalentin/plip.git ~/pliptool'
             os.system(command9)
-            os.chdir(path)
-            command13 = '''echo "alias plip='{0}/pliptool/plip/plipcmd'" >> .basrc'''.format(path2)
-            os.system(command13)
+            os.chdir(path2)
+            with open('.bashrc', 'a') as file:
+                command40 = "alias plip='{0}/pliptool/plip/plipcmd'".format(path2)
+            file.write(command40)
+            file.close()
         else: pass
 
+    def install_gromacs():
+        if is_tool('mdrun') or is_tool('gmx') == True:
+            pass
+        else:
+            dist = str(distro_menu.getcurselection())
+            if dist == 'Ubuntu':
+                dt = 'apt-get'
+            elif dist == 'OpenSuse':
+                dt = 'zypper'
+            command10 = 'sudo {0} install gromacs'.format(dt)
+            os.system(command10)
 
     def install_ligro():
         dist = str(distro_menu.getcurselection())
@@ -164,30 +183,25 @@ if __name__ == '__main__':
             dt = 'zypper'
         command10='sudo {0} install python-webbroser python-tempfile python-matplotlib python-numpy pymol gedit'.format(dt)
         os.system(command10)
-        os.chdir(path)
-        if is_tool('pdb2gmx') == True:
-            command14 = '''echo "alias ligro='{0}/ligro/ligro_gromacs_v4x.py'" >> .basrc'''.format(path2)
-            os.system(command14)
-        elif is_tool('gmx'):
-            command15 = '''echo "alias ligro='{0}/ligro/ligro_gromacs_v5x.py'" >> .basrc'''.format(path2)
-            os.system(command15)
+        if is_tool('mdrun') == True:
+            with open('.bashrc', 'a') as file:
+                command40 = "alias ligro='python {0}/ligro/ligro_gromacs_v4x.py'".format(path2)
+            file.write(command40)
+            file.close()
 
-    def install_gromacs():
-        dist = str(distro_menu.getcurselection())
-        if dist == 'Ubuntu':
-            dt = 'apt-get'
-        elif dist == 'OpenSuse':
-            dt = 'zypper'
-        if is_tool('gmx') or is_tool('pdb2gmx') == False:
-            command12='sudo {0} install gromacs'.format(dt)
-            os.system(command12)
-        else: pass
+        elif is_tool('gmx') == True:
+            with open('.bashrc', 'a') as file:
+                command40 = "alias ligro='python {0}/ligro/ligro_gromacs_v4x.py'".format(path2)
+            file.write(command40)
+            file.close()
+        else:
+            command10 = 'sudo {0} install gromacs'.format(dt)
 
     def install_all():
         install_ambertools()
         install_acpype()
-        install_gromacs()
-        #install_ligro()
+        install_ligro()
+        os.system('sudo rm -r {0}'.format(path))
         mbox.showinfo('Finish', 'Installation has finished, type ligro for to execute')
         sys.exit(0)
 
@@ -272,7 +286,5 @@ if __name__ == '__main__':
     menubar.add_cascade(label="Help", menu=helpmenu)
     CamcelButton = Tkinter.Button(root, text='Cancel', command=callback).grid(row=4, column=0)
     nextButton = Tkinter.Button(root, text='Next', command=install_all).grid(row=4, column=2)
-    img = PhotoImage(file='ic_launcher_.png')
-    root.tk.call('wm', 'iconphoto', root._w, img)
     root.config(menu=menubar)
     root.mainloop()
