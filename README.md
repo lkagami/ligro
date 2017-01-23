@@ -1,15 +1,18 @@
 ---LiGRO - Version 0.1 ---
 
-This software is available to you under the terms of the GPL-3.
+This software is available to you under the terms of the GPL-3. See ~/ligro/LICENCE for more informations.
 Software is created and maintained by Laboratorio de Sintese Organica Medicinal-LaSOM at
 Universidade Federal do Rio Grande do Sul.
 
 Contributors:
 
 Luciano Porto Kagami
+
 luciano_dot_kagami_at_ufrgs_dot_br
+
 Universidade Federal do Rio Grande do Sul
 Laboratorio de Sintese Organica Medicinal -LaSOM
+
 Av. Ipiranga, 2752 - Azenha, Porto Alegre - RS, 90610-000 - Brazil
 
                For Antechamber, please cite:
@@ -42,11 +45,11 @@ Av. Ipiranga, 2752 - Azenha, Porto Alegre - RS, 90610-000 - Brazil
 
 
                For this code plese cite:
+               Manuscript to be submitted.
 
--------------------
 
-
-    For install type sudo python LiGRO_Install.py
+               For install type sudo python LiGRO_Install.py and choose yes for all install packeges confirmation into linux terminal.
+               You need to download the ambertools installation package (http://ambermd.org/AmberTools16-get.html) if it has not already been installed.
     
     
     
