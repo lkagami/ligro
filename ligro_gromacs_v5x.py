@@ -124,8 +124,8 @@ class GUI:
                                       labelpos='w',
                                       label_text='Select Force Field:',
                                       menubutton_textvariable=None,
-                                      items=['amber03', 'amber94', 'amber99', 'amber99sb', 'amber99sb-ildn', 'ambergs',
-                                             'opls-aa/l'],
+                                      items=['amber03', 'amber94', 'amber99', 'amber99sb', 'amber99sb-ildn', 'amberGS',
+                                             'oplsaa'],
                                       menubutton_width=10,
                                       )
         self.ff_menu.pack(anchor='w', padx=10, pady=10)
@@ -320,7 +320,7 @@ class GUI:
         os.system(cmdd)
         os.system('grep -h ATOM trp.pdb Ligand.acpype/Ligand_NEW.pdb > complex.pdb')
 
-        if ff != 'opls-aa/l':
+        if ff != 'oplsaa':
             os.system('cp Ligand.acpype/Ligand_GMX.itp Ligand.itp')
         else:
             os.system('cp Ligand.acpype/Ligand_GMX_OPLS.itp Ligand.itp')

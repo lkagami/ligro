@@ -223,6 +223,7 @@ if __name__ == '__main__':
         else:
             install_ligro4x()
         os.system('sudo rm -r {0}'.format(path))
+        os.chdir(path2)
         os.system('. ~/.bashrc')
         mbox.showinfo('Finish', 'Installation has finished, type ligro for to execute')
         sys.exit(0)
