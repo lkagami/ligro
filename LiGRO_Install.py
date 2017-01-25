@@ -21,15 +21,21 @@ This software is available to you under the terms of the GPL-3. See ~/ligro/LICE
 
                For ACPYPE, please cite:
 
-               SOUSA DA SILVA, A. W.; VRANKEN, W. F.; LAUE, E. D. ACPYPE - AnteChamber
-               PYthon Parser Interface. Manuscript to be submitted.
+               For ACPYPE, please cite:
 
-               Alan Wilter S. da Silva, D.Sc. - CCPN Research Associate
-               Department of Biochemistry, University of Cambridge.
-               80 Tennis Court Road, Cambridge CB2 1GA, UK.
-               >>http://www.bio.cam.ac.uk/~awd28<<
+               SOUSA DA SILVA, A. W. & VRANKEN, W. F.
+               ACPYPE - AnteChamber PYthon Parser interfacE.
+               BMC Research Notes 2012, 5:367 doi:10.1186/1756-0500-5-367
+               http://www.biomedcentral.com/1756-0500/5/367
+
+               Alan Wilter Sousa da Silva, D.Sc.
+               Bioinformatician, UniProt, EMBL-EBI
+               Hinxton, Cambridge CB10 1SD, UK.
+               >>http://www.ebi.ac.uk/~awilter<<
 
                alanwilter _at_ gmail _dot_ com
+
+               For GROMACS please cite:
 
                For PLIP please cite:
 
