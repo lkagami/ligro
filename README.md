@@ -45,7 +45,7 @@ Av. Ipiranga, 2752 - Azenha, Porto Alegre - RS, 90610-000 - Brazil
                Manuscript to be submitted.
 
 
-               For install type sudo python LiGRO_Install.py and choose yes for all install packeges confirmation into linux terminal.
+               For install type sudo python LiGRO_Install.py and choose yes for all install packege confirmation into linux terminal.
                You need to download the ambertools installation package (http://ambermd.org/AmberTools16-get.html) if it has not already been installed.
     
     
