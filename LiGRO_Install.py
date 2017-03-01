@@ -51,13 +51,35 @@ This software is available to you under the terms of the GPL-3. See ~/ligro/LICE
 -------------------
 """
 title = 'LiGRO: Version 0.1 - Install'
+
+print('''
+---LiGRO - version 0.1---
+
+    LiGRO INSTALLER
+
+-------------------------
+
+''')
+
+a = input("Select 1 for Ubuntu distro or select 2 for OpenSuse distro:       " )
+
+if a == 1:
+    dt = 'apt-get'
+elif a == 2:
+    dt = 'zypper'
+else:
+    print("Plese, choose a valid number")
+    quit()
+
 import sys
+import os
+command000="sudo {0} install python-Pmw python-tk".format(dt)
+os.system(command000)
 
 sys.path[:0] = ['../../..']
 import Tkinter, Tkconstants, tkFileDialog
 from Tkinter import *
 import Pmw
-import os
 import shutil
 import webbrowser
 import tkMessageBox as mbox
@@ -130,21 +152,11 @@ if __name__ == '__main__':
 
 
     def install_ambertools():
-        try:
-            os.chdir(path)
-        except:
-            pass
-        # verificar se AMBERTools esta instalado...
             find1 = os.path.exists('AmberTools16.tar.bz2')
             if find1 == False:
                 mbox.showerror("Error", "AmberTools16.tar.bz2 file not found.")
                 quit()
             else:
-                dist = str(distro_menu.getcurselection())
-                if dist == 'Ubuntu':
-                    dt = 'apt-get'
-                elif dist == 'OpenSuse':
-                    dt = 'zypper'
                 os.system(
                     'sudo {0} install make csh flex gfortran g++ xorg-dev zlib1g-dev libbz2-dev patch python-tk python-matplotlib'.format(
                         dt))
@@ -163,11 +175,6 @@ if __name__ == '__main__':
             file.close()
 
     def install_acpype():
-        dist = str(distro_menu.getcurselection())
-        if dist == 'Ubuntu':
-            dt = 'apt-get'
-        elif dist == 'OpenSuse':
-            dt = 'zypper'
             command6 = 'git clone https://github.com/t-/acpype.git'
             os.system(command6)
             path4 = path2 + '/acpype'
@@ -176,11 +183,6 @@ if __name__ == '__main__':
             os.system(command7)
 
     def install_plip():
-        dist = str(distro_menu.getcurselection())
-        if dist == 'Ubuntu':
-            dt = 'apt-get'
-        elif dist == 'OpenSuse':
-            dt = 'zypper'
             command8='sudo {0} install python-openbabel'.format(dt)
             os.system(command8)
             command9='git clone https://github.com/ssalentin/plip.git ~/pliptool'
@@ -192,20 +194,10 @@ if __name__ == '__main__':
             file.close()
 
     def install_gromacs():
-            dist = str(distro_menu.getcurselection())
-            if dist == 'Ubuntu':
-                dt = 'apt-get'
-            elif dist == 'OpenSuse':
-                dt = 'zypper'
             command10 = 'sudo {0} install gromacs'.format(dt)
             os.system(command10)
 
     def install_ligro4x():
-        dist = str(distro_menu.getcurselection())
-        if dist == 'Ubuntu':
-            dt = 'apt-get'
-        elif dist == 'OpenSuse':
-            dt = 'zypper'
         command10='sudo {0} install python-matplotlib python-numpy pymol gedit'.format(dt)
         os.system(command10)
         os.chdir(path2)
@@ -216,11 +208,6 @@ if __name__ == '__main__':
 
 
     def install_ligro5x():
-        dist = str(distro_menu.getcurselection())
-        if dist == 'Ubuntu':
-            dt = 'apt-get'
-        elif dist == 'OpenSuse':
-            dt = 'zypper'
         command10='sudo {0} install python-matplotlib python-numpy pymol gedit'.format(dt)
         os.system(command10)
         os.chdir(path2)
@@ -229,32 +216,65 @@ if __name__ == '__main__':
             file.write(command40)
         file.close()
 
+    root = Tkinter.Tk()
+    Pmw.initialise(root)
+    root.title(title)
+    Tkinter.Label(root, text="LiGRO: Protein-Ligand Molecular Dynamics using ACPYPE, GROMACS and PLIP.").grid(row=0, column=1)
+    widget = root
+    root.geometry("890x400+260+150")
+    menubar = Tkinter.Menu(root)
+    filemenu = Tkinter.Menu(menubar, tearoff=0)
+    filemenu.add_separator()
+    editmenu = Tkinter.Menu(menubar, tearoff=0)
+    editmenu.add_separator()
+    helpmenu = Tkinter.Menu(menubar, tearoff=0)
+
+    w = Pmw.Group(root, tag_text='Install Packeges')
+    w.grid(row=2, column=1)
+    amb1 = Tkinter.Label(w.interior(), text='No select file', bg='white', padx=100, pady=5)
+    amb1.grid(row=3, column=1, padx=10, pady=10)
+
+    var1 = BooleanVar()
+    var2 = BooleanVar()
+    var3 = BooleanVar()
+    var4 = BooleanVar()
+
+    b1=Tkinter.Checkbutton(w.interior(), text='   AmberTools', variable=var1).grid(row=3, column=0, padx=10, pady=10)
+    b2=Tkinter.Checkbutton(w.interior(), text='         ACPYPE', variable=var2).grid(row=4, column=0, padx=10, pady=10)
+    b3=Tkinter.Checkbutton(w.interior(), text='             PLIP', variable=var3).grid(row=5, column=0, padx=10, pady=10)
+    b3=Tkinter.Checkbutton(w.interior(), text='     GROMACS', variable=var4).grid(row=6, column=0, padx=10, pady=10)
+    brw1_bt = Tkinter.Button(w.interior(), text='Browse...', command=openamberfile)
+    brw1_bt.grid(row=3, column=2)
+    scrollbar = Scrollbar(root)
+    scrollbar.grid(row=1, column=3, sticky=W)
+    window_txt = Text(root, width=106, height=8, font="Courier 10", yscrollcommand=scrollbar.set)
+    window_txt.grid(row=1, column=0, columnspan=3, sticky=W)
+    scrollbar.config(command=window_txt.yview)
+
     def install_all():
-        dist = str(distro_menu.getcurselection())
-        if dist == 'Ubuntu':
-            dt = 'apt-get'
-        elif dist == 'OpenSuse':
-            dt = 'zypper'
         command5 = 'sudo {0} install git'.format(dt)
         os.system(command5)
         command9 = 'git clone https://github.com/lkagami/ligro.git ~/ligro'
         os.system(command9)
-        if is_tool('antechamber') == True:
+        if var1.get() == True:
+           install_ambertools()
+        elif var1.get() == 0:
             pass
-        else:
-            install_ambertools()
-        if is_tool('acpype') == True:
+
+        if var2.get() == True:
+           install_acpype()
+        elif var2.get() == 0:
             pass
-        else:
-            install_acpype()
-        try:
-            os.stat(path2+'pliptool')
-        except:
-            install_plip()
-        if is_tool('mdrun') or is_tool('gmx') == True:
+
+        if var3.get() == True:
+           install_plip()
+        elif var3.get() == 0:
             pass
-        else:
-            install_gromacs()
+
+        if var4.get() == True:
+           install_gromacs()
+        elif var4.get() == 0:
+            pass
         if is_tool('gmx') == False:
             pass
         else:
@@ -268,40 +288,6 @@ if __name__ == '__main__':
         os.system('. ~/.bashrc')
         mbox.showinfo('Finish', 'Installation has finished, type ligro for to execute')
         sys.exit(0)
-
-
-    root = Tkinter.Tk()
-    Pmw.initialise(root)
-    root.title(title)
-    Tkinter.Label(root, text="LiGRO: Protein-Ligand Molecular Dynamics using ACPYPE, GROMACS and PLIP.").grid(row=0, column=1)
-    widget = root
-    root.geometry("890x300+260+150")
-    menubar = Tkinter.Menu(root)
-    filemenu = Tkinter.Menu(menubar, tearoff=0)
-    filemenu.add_separator()
-    editmenu = Tkinter.Menu(menubar, tearoff=0)
-    editmenu.add_separator()
-    helpmenu = Tkinter.Menu(menubar, tearoff=0)
-
-    Tkinter.Label(root, text='AmberTools16.tar.bz2 file:').grid(row=3, column=0)
-    amb1 = Tkinter.Label(root, text='No select file', bg='white', padx=100, pady=5)
-    amb1.grid(row=3, column=1, padx=10, pady=10)
-    brw1_bt = Tkinter.Button(root, text='Browse...', command=openamberfile)
-    brw1_bt.grid(row=3, column=2)
-    distro_menu = Pmw.OptionMenu(root,
-                                    labelpos='w',
-                                    label_text='Select your distro:',
-                                    menubutton_textvariable=None,
-                                    items=['Ubuntu', 'OpenSuse'],
-                                    menubutton_width=10,
-                                    )
-    distro_menu.grid(row=4, column=1)
-    scrollbar = Scrollbar(root)
-    scrollbar.grid(row=1, column=3, sticky=W)
-    window_txt = Text(root, width=106, height=8, font="Courier 10", yscrollcommand=scrollbar.set)
-    window_txt.grid(row=1, column=0, columnspan=3, sticky=W)
-    scrollbar.config(command=window_txt.yview)
-
     my_opening_message0 = """
                This software is available to you under the terms of the GPL-3. See ~/ligro/LICENCE for more informations.
                Software is created and maintained by Laboratorio de Sintese Organica Medicinal-LaSOM at
@@ -348,7 +334,7 @@ if __name__ == '__main__':
     helpmenu.add_command(label="Help Index", command=help)
     helpmenu.add_command(label="About...", command=about)
     menubar.add_cascade(label="Help", menu=helpmenu)
-    CamcelButton = Tkinter.Button(root, text='Cancel', command=callback).grid(row=4, column=0)
-    nextButton = Tkinter.Button(root, text='Next', command=install_all).grid(row=4, column=2)
+    CamcelButton = Tkinter.Button(root, text='Cancel', command=callback).grid(row=6, column=0)
+    nextButton = Tkinter.Button(root, text='Next', command=install_all).grid(row=6, column=2)
     root.config(menu=menubar)
     root.mainloop()
