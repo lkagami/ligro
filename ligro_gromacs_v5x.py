@@ -193,16 +193,16 @@ class GUI:
         self.min_menu.grid(row=4, column=0, padx=10, pady=10)
         group_NVT = Pmw.Group(tab3, tag_text='NVT')
         group_NVT.grid(row=3, column=1, padx=10, pady=10)
-        self.time_nvt = Pmw.EntryField(group_NVT.interior(), labelpos='w', value='500000', label_text='Time (ps):                               ')
+        self.time_nvt = Pmw.EntryField(group_NVT.interior(), labelpos='w', value='500000', label_text='Steps:                               ')
         self.time_nvt.grid(row=4, column=0, padx=10, pady=10)
         group_NPT = Pmw.Group(tab3, tag_text='NPT')
         group_NPT.grid(row=3, column=2, padx=10, pady=10)
         self.time_npt = Pmw.EntryField(group_NPT.interior(), labelpos='w', value='500000',
-                                       label_text='Time (ps):')
+                                       label_text='Steps:')
         self.time_npt.grid(row=4, column=1, padx=10, pady=10)
         group_md = Pmw.Group(tab3, tag_text='Molecular Dynamics')
         group_md.grid(row=4, column=1, padx=10, pady=10)
-        self.time_md = Pmw.EntryField(group_md.interior(), labelpos='w', value='500000', label_text='Time (ps):                                ')
+        self.time_md = Pmw.EntryField(group_md.interior(), labelpos='w', value='500000', label_text='Steps:                                ')
         self.time_md.grid(row=6, column=0, padx=10, pady=10)
 
         #
