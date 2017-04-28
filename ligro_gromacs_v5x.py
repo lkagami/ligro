@@ -198,7 +198,7 @@ class GUI:
         group_NPT = Pmw.Group(tab3, tag_text='NPT')
         group_NPT.grid(row=3, column=2, padx=10, pady=10)
         self.time_npt = Pmw.EntryField(group_NPT.interior(), labelpos='w', value='500000',
-                                       label_text='Steps:')
+                                       label_text='Steps:           ')
         self.time_npt.grid(row=4, column=1, padx=10, pady=10)
         group_md = Pmw.Group(tab3, tag_text='Molecular Dynamics')
         group_md.grid(row=4, column=1, padx=10, pady=10)
