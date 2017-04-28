@@ -1347,7 +1347,7 @@ if __name__ == '__main__':
 
 
     def help():
-        webbrowser.open('https://www.ufrgs.br/lasomfarmacia/', new=1, autoraise=True)
+        webbrowser.open('https://www.ufrgs.br/lasomfarmacia/ligro/crbst_3.html', new=1, autoraise=True)
 
 
     def about():
