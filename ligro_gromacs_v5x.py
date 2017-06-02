@@ -342,7 +342,7 @@ class GUI:
         cmd1 = 'gmx editconf -bt {0} -f complex.pdb -o trpb4solv.pdb -d {1}'.format(bx, dst)
         os.system(cmd1)
         os.system('gmx solvate -cp trpb4solv.pdb -cs spc216.gro -o trpb4ion.pdb -p trp.top')
-        os.system('''
+        os.system('''cat << EOF >| em.mdp
                     ; LINES STARTING WITH ';' ARE COMMENTS
                     title		= Minimization	; Title of run
 
@@ -362,8 +362,9 @@ class GUI:
                     rcoulomb	    = 1.0		; long range electrostatic cut-off
                     rvdw		    = 1.0		; long range Van der Waals cut-off
                     pbc             = xyz 		; Periodic Boundary Conditions
-
+                    EOF
                     ''')
+        
         os.system('gmx grompp -f em.mdp -c trpb4ion.pdb -p trp.top -o ion.tpr')
 
         if self.ion_menu.getcurselection() == 'Na':
