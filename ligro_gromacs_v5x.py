@@ -2,7 +2,7 @@
 """
 ---LiGRO - Version 0.1 ---
 
-This software is available to you under the terms of the GPL-3.See ~/ligro/LICENCE for more informations.
+This software is available to you under the terms of the GPL-3. See ~/ligro/LICENCE for more informations.
 Software is created and maintained by Laboratorio de Sintese Organica Medicinal-LaSOM at
 Universidade Federal do Rio Grande do Sul.
 Contributors:
@@ -48,6 +48,7 @@ Av. Ipiranga, 2752 - Azenha, Porto Alegre - RS, 90610-000 - Brazil
 
 
                For this code plese cite:
+               Manuscript to be submitted.
 
 -------------------
 """
@@ -342,31 +343,28 @@ class GUI:
         cmd1 = 'gmx editconf -bt {0} -f complex.pdb -o trpb4solv.pdb -d {1}'.format(bx, dst)
         os.system(cmd1)
         os.system('gmx solvate -cp trpb4solv.pdb -cs spc216.gro -o trpb4ion.pdb -p trp.top')
-        os.system('''
-		cat << EOF >| em.mdp
-          	; LINES STARTING WITH ';' ARE COMMENTS
-	  	title		= Minimization	; Title of run
+        os.system('''cat << EOF >| em.mdp
+        ; LINES STARTING WITH ';' ARE COMMENTS
+	title		= Minimization	; Title of run
 
-	  	; Parameters describing what to do, when to stop and what to save
-	  	integrator	= steep		; Algorithm (steep = steepest descent minimization)
-	  	emtol		= 1000.0  	; Stop minimization when the maximum force < 10.0 kJ/mol
-	  	emstep      = 0.01      ; Energy step size
-	  	nsteps		= 50000	  	; Maximum number of (minimization) steps to perform
-		energygrps	= system	; Which energy group(s) to write to disk
+	; Parameters describing what to do, when to stop and what to save
+	integrator	= steep		; Algorithm (steep = steepest descent minimization)
+	emtol		= 1000.0  	; Stop minimization when the maximum force < 10.0 kJ/mol
+	emstep      = 0.01      ; Energy step size
+	nsteps		= 50000	  	; Maximum number of (minimization) steps to perform
+	energygrps	= system	; Which energy group(s) to write to disk
 
-	  	; Parameters describing how to find the neighbors of each atom and how to calculate the interactions
-	  	nstlist		    = 1		    ; Frequency to update the neighbor list and long range forces
-	  	cutoff-scheme   = Verlet
-	  	ns_type		    = grid		; Method to determine neighbor list (simple, grid)
-	  	rlist		    = 1.0		; Cut-off for making neighbor list (short range forces)
-	  	coulombtype	    = PME		; Treatment of long range electrostatic interactions
-	  	rcoulomb	    = 1.0		; long range electrostatic cut-off
-	  	rvdw		    = 1.0		; long range Van der Waals cut-off
-	 	pbc             = xyz 		; Periodic Boundary Conditions
-	  	EOF
+	; Parameters describing how to find the neighbors of each atom and how to calculate the interactions
+	nstlist		    = 1		    ; Frequency to update the neighbor list and long range forces
+	cutoff-scheme   = Verlet
+	ns_type		    = grid		; Method to determine neighbor list (simple, grid)
+	rlist		    = 1.0		; Cut-off for making neighbor list (short range forces)
+	coulombtype	    = PME		; Treatment of long range electrostatic interactions
+	rcoulomb	    = 1.0		; long range electrostatic cut-off
+	rvdw		    = 1.0		; long range Van der Waals cut-off
+	pbc             = xyz 		; Periodic Boundary Conditions
                     ''')
 
-                 
         os.system('gmx grompp -f em.mdp -c trpb4ion.pdb -p trp.top -o ion.tpr')
 
         if self.ion_menu.getcurselection() == 'Na':
@@ -414,7 +412,7 @@ class GUI:
             emtol		= 1000.0  	; Stop minimization when the maximum force < 10.0 kJ/mol
             emstep      = 0.01      ; Energy step size
             nsteps		= {0}	  	; Maximum number of (minimization) steps to perform
-            energygrps	= Protein JZ4	; Which energy group(s) to write to disk
+            energygrps	= Protein LIG	; Which energy group(s) to write to disk
 
             ; Parameters describing how to find the neighbors of each atom and how to calculate the interactions
             nstlist		    = 1		    ; Frequency to update the neighbor list and long range forces
@@ -518,7 +516,7 @@ class GUI:
         fourierspacing  = 0.16      ; grid spacing for FFT
         ; Temperature coupling
         tcoupl      = V-rescale                     ; modified Berendsen thermostat
-        tc-grps     = Protein_LIG Water_and_ions    ; two coupling groups - more accurate
+        tc-grps     = Protein non-Protein    ; two coupling groups - more accurate
         tau_t       = 0.1   0.1                     ; time constant, in ps
         ref_t       = {2}   {2}                    ; reference temperature, one for each group, in K
         ; Pressure coupling
@@ -568,7 +566,7 @@ class GUI:
         fourierspacing  = 0.16      ; grid spacing for FFT
         ; Temperature coupling
         tcoupl      = V-rescale                     ; modified Berendsen thermostat
-        tc-grps     = Protein_LIG Water_and_ions    ; two coupling groups - more accurate
+        tc-grps     = Protein non-Protein    ; two coupling groups - more accurate
         tau_t       = 0.1   0.1                     ; time constant, in ps
         ref_t       = {2}   {2}                     ; reference temperature, one for each group, in K
         ; Pressure coupling
@@ -622,7 +620,7 @@ class GUI:
         fourierspacing  = 0.16      ; grid spacing for FFT
         ; Temperature coupling
         tcoupl      = V-rescale                     ; modified Berendsen thermostat
-        tc-grps     = Protein_LIG Water_and_ions    ; two coupling groups - more accurate
+        tc-grps     = Protein non-Protein    ; two coupling groups - more accurate
         tau_t       = 0.1   0.1                     ; time constant, in ps
         ref_t       = {2}   {2}                     ; reference temperature, one for each group, in K
         ; Pressure coupling
@@ -678,8 +676,8 @@ class GUI:
             os.chdir(path)
         except:
             pass
-        find1 = os.path.exists('Ligand.mol2')
-        find2 = os.path.exists('protein.pdb')
+        find1=os.path.exists('Ligand.mol2')
+        find2=os.path.exists('protein.pdb')
         if find1 == False:
             mbox.showerror("Error", "MOL2 or PDB file not found.")
             quit()
@@ -705,6 +703,9 @@ class GUI:
         os.system('babel Ligand.mol2 Ligand.sdf')
         os.system('babel Ligand.sdf Ligand.mol2')
         os.system("sed -i 's/A1/LIG/g' Ligand.mol2")
+        os.system('babel Ligand.mol2 Ligand.sdf')
+        os.system('babel Ligand.sdf Ligand.mol2')
+        os.system("sed -i 's/A1/LIG/g' Ligand.mol2")
         usrm = self.b.getvar('var5')
         cmdd = 'acpype -i Ligand.mol2 {0}'.format(usrm)
         os.system(cmdd)
@@ -717,7 +718,7 @@ class GUI:
 
         os.system('cp trp.top Complex.top')
         os.system("cat Complex.top | sed '/forcefield\.itp\"/a\
-                    #include \"Ligand.itp\" ' >| Complex2.top")
+                   #include \"Ligand.itp\" ' >| Complex2.top")
 
         os.system('echo "Ligand              1" >> Complex2.top')
         os.system('mv Complex2.top trp.top')
@@ -727,28 +728,27 @@ class GUI:
         cmd1 = 'gmx editconf -bt {0} -f complex.pdb -o trpb4solv.pdb -d {1}'.format(bx, dst)
         os.system(cmd1)
         os.system('gmx solvate -cp trpb4solv.pdb -cs spc216.gro -o trpb4ion.pdb -p trp.top')
-        os.system('''
-                     ; LINES STARTING WITH ';' ARE COMMENTS
-                     title		= Minimization	; Title of run
+        os.system('''cat << EOF >| em.mdp
+        ; LINES STARTING WITH ';' ARE COMMENTS
+	title		= Minimization	; Title of run
 
-                     ; Parameters describing what to do, when to stop and what to save
-                     integrator	= steep		; Algorithm (steep = steepest descent minimization)
-                     emtol		= 1000.0  	; Stop minimization when the maximum force < 10.0 kJ/mol
-                     emstep      = 0.01      ; Energy step size
-                     nsteps		= 50000	  	; Maximum number of (minimization) steps to perform
-                     energygrps	= system	; Which energy group(s) to write to disk
+	; Parameters describing what to do, when to stop and what to save
+	integrator	= steep		; Algorithm (steep = steepest descent minimization)
+	emtol		= 1000.0  	; Stop minimization when the maximum force < 10.0 kJ/mol
+	emstep      = 0.01      ; Energy step size
+	nsteps		= 50000	  	; Maximum number of (minimization) steps to perform
+	energygrps	= system	; Which energy group(s) to write to disk
 
-                     ; Parameters describing how to find the neighbors of each atom and how to calculate the interactions
-                     nstlist		    = 1		    ; Frequency to update the neighbor list and long range forces
-                     cutoff-scheme   = Verlet
-                     ns_type		    = grid		; Method to determine neighbor list (simple, grid)
-                     rlist		    = 1.0		; Cut-off for making neighbor list (short range forces)
-                     coulombtype	    = PME		; Treatment of long range electrostatic interactions
-                     rcoulomb	    = 1.0		; long range electrostatic cut-off
-                     rvdw		    = 1.0		; long range Van der Waals cut-off
-                     pbc             = xyz 		; Periodic Boundary Conditions
-
-                     ''')
+	; Parameters describing how to find the neighbors of each atom and how to calculate the interactions
+	nstlist		    = 1		    ; Frequency to update the neighbor list and long range forces
+	cutoff-scheme   = Verlet
+	ns_type		    = grid		; Method to determine neighbor list (simple, grid)
+	rlist		    = 1.0		; Cut-off for making neighbor list (short range forces)
+	coulombtype	    = PME		; Treatment of long range electrostatic interactions
+	rcoulomb	    = 1.0		; long range electrostatic cut-off
+	rvdw		    = 1.0		; long range Van der Waals cut-off
+	pbc             = xyz 		; Periodic Boundary Conditions
+                    ''')
         os.system('gmx grompp -f em.mdp -c trpb4ion.pdb -p trp.top -o ion.tpr')
 
         if self.ion_menu.getcurselection() == 'Na':
@@ -796,7 +796,7 @@ class GUI:
              emtol		= 1000.0  	; Stop minimization when the maximum force < 10.0 kJ/mol
              emstep      = 0.01      ; Energy step size
              nsteps		= {0}	  	; Maximum number of (minimization) steps to perform
-             energygrps	= Protein JZ4	; Which energy group(s) to write to disk
+             energygrps	= Protein LIG	; Which energy group(s) to write to disk
 
              ; Parameters describing how to find the neighbors of each atom and how to calculate the interactions
              nstlist		    = 1		    ; Frequency to update the neighbor list and long range forces
@@ -815,25 +815,25 @@ class GUI:
             os.system('gmx grompp -f em_real.mdp -c trpb4em.pdb -p trp.top -o em.tpr')
             os.system('gmx mdrun -v -deffnm em')
             os.system('''
-             make_ndx -f em.gro -o index2.ndx << EOF
-             "Protein" | "Other"
-             q
-             EOF ''')
+                        gmx make_ndx -f em.gro -o index2.ndx << EOF
+                        "Protein" | "Other"
+                        q
+                        EOF ''')
             os.system('''
-             gmx trjconv -f em.gro -s em.tpr -pbc nojump -ur compact -center -o em_2.gro -n index2.ndx << EOF
-             Protein_Other
-             System
-             EOF ''')
+                        gmx trjconv -f em.gro -s em.tpr -pbc nojump -ur compact -center -o em_2.gro -n index2.ndx << EOF
+                        Protein_Other
+                        System
+                        EOF ''')
             os.system('''
-             mv em_2.gro em.gro ''')
+                        mv em_2.gro em.gro ''')
             os.system('''
-             gmx trjconv -f em.gro -s em.tpr -pbc mol -ur compact -center -o em_2.pdb -n index2.ndx << EOF
-             Protein_Other
-             System
-             EOF
-             ''')
+                        gmx trjconv -f em.gro -s em.tpr -pbc mol -ur compact -center -o em_2.pdb -n index2.ndx << EOF
+                        Protein_Other
+                        System
+                        EOF
+                        ''')
             os.system('''
-                     mv em_2.pdb em.pdb ''')
+                                    mv em_2.pdb em.pdb ''')
 
         else:
             os.system(cmd3)
@@ -843,24 +843,25 @@ class GUI:
             os.system('gmx grompp -f em_real.mdp -c em.gro -p trp.top -o em.tpr')
             os.system('gmx mdrun -v -deffnm em')
             os.system('''
-                         gmx make_ndx -f em.gro -o index2.ndx << EOF
-                         "Protein" | "Other"
-                         q
-                         EOF ''')
+                        gmx make_ndx -f em.gro -o index2.ndx << EOF
+                        "Protein" | "Other"
+                        q
+                        EOF ''')
             os.system('''
-                         gmx trjconv -f em.gro -s em.tpr -pbc nojump -ur compact -center -o em_2.gro -n index2.ndx << EOF
-                         Protein_Other
-                         System
-                         EOF ''')
+                        gmx trjconv -f em.gro -s em.tpr -pbc nojump -ur compact -center -o em_2.gro -n index2.ndx << EOF
+                        Protein_Other
+                        System
+                        EOF ''')
             os.system('''
-                         mv em_2.gro em.gro ''')
+                        mv em_2.gro em.gro ''')
             os.system('''
-                         gmx trjconv -f em.gro -s em.tpr -pbc mol -ur compact -center -o em_2.pdb -n index2.ndx << EOF
-                         Protein_Other
-                         System
-                         EOF
-                         ''')
-            os.system('mv em_2.pdb em.pdb')
+                        gmx trjconv -f em.gro -s em.tpr -pbc mol -ur compact -center -o em_2.pdb -n index2.ndx << EOF
+                        Protein_Other
+                        System
+                        EOF
+                        ''')
+            os.system('''
+                                    mv em_2.pdb em.pdb ''')
 
         stnvt = str(self.time_nvt.getvalue())
         stnpt = str(self.time_npt.getvalue())
@@ -899,7 +900,7 @@ class GUI:
          fourierspacing  = 0.16      ; grid spacing for FFT
          ; Temperature coupling
          tcoupl      = V-rescale                     ; modified Berendsen thermostat
-         tc-grps     = Protein_LIG Water_and_ions    ; two coupling groups - more accurate
+         tc-grps     = Protein non-Protein    ; two coupling groups - more accurate
          tau_t       = 0.1   0.1                     ; time constant, in ps
          ref_t       = {2}   {2}                    ; reference temperature, one for each group, in K
          ; Pressure coupling
@@ -949,7 +950,7 @@ class GUI:
          fourierspacing  = 0.16      ; grid spacing for FFT
          ; Temperature coupling
          tcoupl      = V-rescale                     ; modified Berendsen thermostat
-         tc-grps     = Protein_LIG Water_and_ions    ; two coupling groups - more accurate
+         tc-grps     = Protein non-Protein    ; two coupling groups - more accurate
          tau_t       = 0.1   0.1                     ; time constant, in ps
          ref_t       = {2}   {2}                     ; reference temperature, one for each group, in K
          ; Pressure coupling
@@ -1003,7 +1004,7 @@ class GUI:
          fourierspacing  = 0.16      ; grid spacing for FFT
          ; Temperature coupling
          tcoupl      = V-rescale                     ; modified Berendsen thermostat
-         tc-grps     = Protein_LIG Water_and_ions    ; two coupling groups - more accurate
+         tc-grps     = Protein non-Protein    ; two coupling groups - more accurate
          tau_t       = 0.1   0.1                     ; time constant, in ps
          ref_t       = {2}   {2}                     ; reference temperature, one for each group, in K
          ; Pressure coupling
@@ -1035,14 +1036,14 @@ class GUI:
 
         os.system('echo 2|gmx genrestr -f Ligand.acpype/Ligand_GMX.gro -o posre_LIG.itp -fc 1000 1000 1000')
         os.system(r'''
-         sed '/posre.itp/{p;s/.*/#endif \n\n; Ligand position restraints \n#ifdef POSRES \n#include "posre_LIG.itp"/;}' trp.top > trp2.top
-         ''')
+        sed '/posre.itp/{p;s/.*/#endif \n\n; Ligand position restraints \n#ifdef POSRES \n#include "posre_LIG.itp"/;}' trp.top > trp2.top
+        ''')
         os.system('mv trp2.top trp.top')
 
         os.system('cat << EOF > | queue.sh')
 
         os.system("echo 'gmx grompp -f nvt.mdp -c em.pdb -p trp.top -o nvt.tpr' >> queue.sh")
-        os.system("echo 'gmx mdrun -v -deffnm nvt' >> queue.sh")
+        os.system("echo  'gmx mdrun -v -deffnm nvt' >> queue.sh")
         os.system("echo 'gmx grompp -f npt.mdp -c nvt.gro -p trp.top -o npt.tpr' >> queue.sh")
         os.system("echo 'gmx mdrun -v -deffnm npt' >> queue.sh")
         os.system("echo 'gmx grompp -f md.mdp -c npt.gro -p trp.top -o md.tpr' >> queue.sh")
@@ -1058,46 +1059,45 @@ class GUI:
         md2 = '{0}.edr'.format(pj1)
         md3 = '{0}.gro'.format(pj1)
         os.system('''
-                                 gmx make_ndx -f md.gro -o index3.ndx << EOF
-                                 "Protein" | "Other"
-                                 q
-                                 EOF ''')
+                                         gmx make_ndx -f md.gro -o index3.ndx << EOF
+                                         "Protein" | "Other"
+                                         q
+                                         EOF ''')
         os.system('''
-                                 gmx trjconv -f md.gro -s md.tpr -pbc nojump -ur compact -center -o md_2.gro -n index3.ndx << EOF
-                                 Protein_Other
-                                 System
-                                 EOF ''')
-        os.system('''
-                                 mv md_2.gro md.gro ''')
-        os.system('''
-                                 gmx trjconv -f md.gro -s md.tpr -pbc mol -ur compact -center -o md_2.gro -n index3.ndx << EOF
-                                 Protein_Other
-                                 System
-                                 EOF
-                                 ''')
-        os.system('mv md_2.gro md.gro')
-        os.system('''
-                                         gmx trjconv -f md.xtc -s md.tpr -pbc nojump -ur compact -center -o md_2.xtc -n index3.ndx << EOF
+                                         gmx trjconv -f md.gro -s md.tpr -pbc nojump -ur compact -center -o md_2.gro -n index3.ndx << EOF
                                          Protein_Other
                                          System
                                          EOF ''')
         os.system('''
-                                         mv md_2.xtc md.xtc ''')
+                                         mv md_2.gro md.gro ''')
         os.system('''
-                                         gmx trjconv -f md.xtc -s md.tpr -pbc mol -ur compact -center -o md_2.xtc -n index3.ndx << EOF
+                                         gmx trjconv -f md.gro -s md.tpr -pbc mol -ur compact -center -o md_2.gro -n index3.ndx << EOF
                                          Protein_Other
                                          System
                                          EOF
                                          ''')
+        os.system('mv md_2.gro md.gro')
+        os.system('''
+                                                 gmx trjconv -f md.xtc -s md.tpr -pbc nojump -ur compact -center -o md_2.xtc -n index3.ndx << EOF
+                                                 Protein_Other
+                                                 System
+                                                 EOF ''')
+        os.system('''
+                                                 mv md_2.xtc md.xtc ''')
+        os.system('''
+                                                 gmx trjconv -f md.xtc -s md.tpr -pbc mol -ur compact -center -o md_2.xtc -n index3.ndx << EOF
+                                                 Protein_Other
+                                                 System
+                                                 EOF
+                                                 ''')
         os.system('mv md_2.xtc md.xtc')
         shutil.copy('md.xtc', md1)
         shutil.copy('md.edr', md2)
         shutil.copy('md.gro', md3)
-        shutil.copy2(md1, pj)
-        shutil.copy2(md2, pj)
-        shutil.copy2(md3, pj)
-        dr = str(self.save.getvalue())
-        shutil.copy2('md.tpr', dr)
+	dr = str(self.save.getvalue())
+        shutil.copy2(md1, dr)
+        shutil.copy2(md2, dr)
+        shutil.copy2(md3, dr)
         mbox.showinfo('Finish', 'Job has finished')
         sys.exit(0)
 
@@ -1142,7 +1142,7 @@ class GUI:
         pj = str(self.project.getvalue())
 
         if analysis == 'RMSD':
-            command= ''' g_rms -s md_an.tpr -f md_an.xtc -o rmsd.xvg -xvg none << EOF
+            command= ''' gmx rms -s md_an.tpr -f md_an.xtc -o rmsd.xvg -xvg none << EOF
                                     {0}
                                     {0}
                                     EOF '''.format(struct)
@@ -1179,7 +1179,7 @@ class GUI:
 
 
         elif analysis == 'RMSF':
-            command1 = ''' g_rmsf -s md_an.tpr -f md_an.xtc -o rmsf.xvg -xvg none -res << EOF
+            command1 = ''' gmx rmsf -s md_an.tpr -f md_an.xtc -o rmsf.xvg -xvg none -res << EOF
                                                 {0}
                                                 EOF '''.format(struct)
             os.system(command1)
@@ -1254,7 +1254,7 @@ class GUI:
             sys.exit(0)
 
         elif analysis == 'MSD':
-            command= ''' g_msd -s md_an.tpr -f md_an.xtc -o msd.xvg -xvg none << EOF
+            command= ''' gmx msd -s md_an.tpr -f md_an.xtc -o msd.xvg -xvg none << EOF
                                     {0}
                                     EOF '''.format(struct)
             os.system(command)
@@ -1304,7 +1304,7 @@ class GUI:
         else:
             pass
         timeplip = str(self.ft.getvalue())
-        command3 = '''trjconv -s md_an.tpr -f md_an.xtc -o plip.pdb -b {0} -e {0} << EOF
+        command3 = '''gmx trjconv -s md_an.tpr -f md_an.xtc -o plip.pdb -b {0} -e {0} << EOF
                    non-Water
                    EOF'''.format(timeplip)
         command5 = 'gedit report.txt'
@@ -1378,8 +1378,8 @@ if __name__ == '__main__':
     helpmenu.add_command(label="Help Index", command=help)
     helpmenu.add_command(label="About...", command=about)
     menubar.add_cascade(label="Help", menu=helpmenu)
-    path4 = path2 + '/ligro'
-    img = Tkinter.PhotoImage(file=path4 + '/ic_launcher_.png')
+    path4=path2+'/ligro'
+    img = Tkinter.PhotoImage(file=path4+'/ic_launcher_.png')
     root.tk.call('wm', 'iconphoto', root._w, img)
     root.config(menu=menubar)
     root.mainloop()

@@ -1087,11 +1087,10 @@ class GUI:
         shutil.copy('md.xtc', md1)
         shutil.copy('md.edr', md2)
         shutil.copy('md.gro', md3)
-        shutil.copy2(md1, pj)
-        shutil.copy2(md2, pj)
-        shutil.copy2(md3, pj)
         dr = str(self.save.getvalue())
-        shutil.copy2('md.tpr', dr)
+        shutil.copy2(md1, dr)
+        shutil.copy2(md2, dr)
+        shutil.copy2(md3, dr)
         mbox.showinfo('Finish', 'Job has finished')
         sys.exit(0)
 
@@ -1192,7 +1191,7 @@ class GUI:
             mbox.showinfo('Finish', 'Job has finished')
             sys.exit(0)
         elif analysis == 'RG':
-            command2 = ''' gmx gyrate -s md_an.tpr -f md_an.xtc -o gyrate.xvg -xvg none << EOF
+            command2 = ''' g_gyrate -s md_an.tpr -f md_an.xtc -o gyrate.xvg -xvg none << EOF
                                                 {0}
                                                 EOF '''.format(struct)
             os.system(command2)
