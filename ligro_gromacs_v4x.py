@@ -1051,6 +1051,7 @@ class GUI:
         md1 = '{0}.xtc'.format(pj1)
         md2 = '{0}.edr'.format(pj1)
         md3 = '{0}.gro'.format(pj1)
+        md4 = '{0}.tpr'.format(pj1)
         os.system('''
                                          make_ndx -f md.gro -o index3.ndx << EOF
                                          "Protein" | "Other"
@@ -1087,6 +1088,7 @@ class GUI:
         shutil.copy('md.xtc', md1)
         shutil.copy('md.edr', md2)
         shutil.copy('md.gro', md3)
+        shutil.copy('md.tpr', md4)
         dr = str(self.save.getvalue())
         shutil.copy2(md1, dr)
         shutil.copy2(md2, dr)
