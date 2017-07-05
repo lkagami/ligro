@@ -1094,10 +1094,12 @@ class GUI:
         shutil.copy('md.xtc', md1)
         shutil.copy('md.edr', md2)
         shutil.copy('md.gro', md3)
+	shutil.copy('md.tpr', md4)
 	dr = str(self.save.getvalue())
         shutil.copy2(md1, dr)
         shutil.copy2(md2, dr)
         shutil.copy2(md3, dr)
+	shutil.copy2(md4, dr)
         mbox.showinfo('Finish', 'Job has finished')
         sys.exit(0)
 
