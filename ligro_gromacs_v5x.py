@@ -1058,6 +1058,7 @@ class GUI:
         md1 = '{0}.xtc'.format(pj1)
         md2 = '{0}.edr'.format(pj1)
         md3 = '{0}.gro'.format(pj1)
+	md4 = '{0}.tpr'.format(pj1)
         os.system('''
                                          gmx make_ndx -f md.gro -o index3.ndx << EOF
                                          "Protein" | "Other"
