@@ -1,6 +1,6 @@
 #!/usr/bin/python
 """
----LiGRO - version 0.1---
+---LiGRO - version 0.2---
 
 This software is available to you under the terms of the GPL-3. See ~/ligro/LICENCE for more informations.
                Software is created and maintained by Laboratorio de Sintese Organica Medicinal-LaSOM at
@@ -50,10 +50,10 @@ This software is available to you under the terms of the GPL-3. See ~/ligro/LICE
 
 -------------------
 """
-title = 'LiGRO: Version 0.1 - Install'
+title = 'LiGRO: Version 0.2 - Install'
 
 print('''
----LiGRO - version 0.1---
+---LiGRO - version 0.2---
 
     LiGRO INSTALLER
 
@@ -73,7 +73,7 @@ else:
 
 import sys
 import os
-command000="sudo {0} install python-Pmw python-tk".format(dt)
+command000="sudo {0} install python-Pmw python-tk python-pandas ".format(dt)
 os.system(command000)
 
 sys.path[:0] = ['../../..']
@@ -170,7 +170,7 @@ if __name__ == '__main__':
             os.system('make install')
             os.chdir(path2)
             with open('.bashrc', 'a') as file:
-                command40 = "source {0}/amber16/amber.sh".format(path2)
+                command40 = "source {0}/amber16/amber.sh\n".format(path2)
                 file.write(command40)
             file.close()
 
@@ -189,7 +189,7 @@ if __name__ == '__main__':
             os.system(command9)
             os.chdir(path2)
             with open('.bashrc', 'a') as file:
-                command40 = "alias plip='{0}/pliptool/plip/plipcmd'".format(path2)
+                command40 = "alias plip='{0}/pliptool/plip/plipcmd\n'".format(path2)
                 file.write(command40)
             file.close()
 
@@ -202,7 +202,7 @@ if __name__ == '__main__':
         os.system(command10)
         os.chdir(path2)
         with open('.bashrc', 'a') as file:
-            command40 = "alias ligro='python {0}/ligro/ligro_gromacs_v4x.py'".format(path2)
+            command40 = "alias ligro='python {0}/ligro/ligro_gromacs_v4x.py'\n".format(path2)
             file.write(command40)
         file.close()
 
@@ -212,7 +212,7 @@ if __name__ == '__main__':
         os.system(command10)
         os.chdir(path2)
         with open('.bashrc', 'a') as file:
-            command40 = "alias ligro='python {0}/ligro/ligro_gromacs_v5x.py'".format(path2)
+            command40 = "alias ligro='python {0}/ligro/ligro_gromacs_v5x.py'\n".format(path2)
             file.write(command40)
         file.close()
 
