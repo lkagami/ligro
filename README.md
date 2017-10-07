@@ -41,7 +41,10 @@ Av. Ipiranga, 2752 - Azenha, Porto Alegre - RS, 90610-000 - Brazil
            For GROMACS please cite:
            Pronk, Sander, et al. "GROMACS 4.5: a high-throughput and highly parallel open
            source molecular simulation toolkit." Bioinformatics 29.7 (2013): 845-854.
-
+        
+           For PLIP please cite:
+           Salentin, Sebastian, et al. "PLIP: fully automated protein–ligand interaction profiler."
+           Nucleic acids research 43.W1 (2015): W443-W447.
 
            For this code plese cite:
            Kagami, L.P., das Neves, G.M., da Silva, A.W.S. et al. J Mol Model (2017) 23: 304.
