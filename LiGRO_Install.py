@@ -1,4 +1,6 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 """
 ---LiGRO - version 0.2---
 
@@ -38,7 +40,7 @@ This software is available to you under the terms of the GPL-3. See ~/ligro/LICE
            source molecular simulation toolkit." Bioinformatics 29.7 (2013): 845-854.
         
            For PLIP please cite:
-           Salentin, Sebastian, et al. "PLIP: fully automated protein–ligand interaction profiler."
+           Salentin, Sebastian, et al. "PLIP: fully automated protein–ligand interaction profiler.
            Nucleic acids research 43.W1 (2015): W443-W447.
 
            For this code plese cite:
@@ -102,16 +104,6 @@ except:
 
 if __name__ == '__main__':
 
-    def openamberfile():
-        try:
-            amberfile = tkFileDialog.askopenfilename(initialdir=path2, title="Select AMBER TAR.BZ2 file",
-                                                        filetypes=(("TAR.BZ2 files", "*.tar.bz2"), ("all files", "*.*")))
-            amb1['text'] = amberfile
-            shutil.copy(amberfile, path)
-        except:
-            amb1['text'] = 'No select file'
-
-
     def callback():
         if mbox.askyesno('Cancel', 'Really cancel?'):
             sys.exit(0)
@@ -155,30 +147,21 @@ if __name__ == '__main__':
 
 
     def install_ambertools():
-            find1 = os.path.exists('AmberTools16.tar.bz2')
-            if find1 == False:
-                mbox.showerror("Error", "AmberTools16.tar.bz2 file not found.")
-                quit()
-            else:
-                os.system(
-                    'sudo {0} install make csh flex gfortran g++ xorg-dev zlib1g-dev libbz2-dev patch python-tk python-matplotlib'.format(
-                        dt))
-                os.system('tar xvfj AmberTools16.tar.bz2')
-            os.system('mv {0}/amber16 {1}'.format(path, path2))
-            os.putenv('AMBERHOME', path2 + '/amber16')
-            path3 = path2 + '/amber16'
-            os.chdir(path3)
-            os.system('./configure gnu')
-            os.system('source amber.sh')
-            os.system('make install')
-            os.chdir(path2)
-            with open('.bashrc', 'a') as file:
-                command40 = "source {0}/amber16/amber.sh\n".format(path2)
-                file.write(command40)
-            file.close()
+      amberpath = "{0}/amber18/".format(path2)
+      if os.path.exists(amberpath):
+        print("Ambertools18 is already installed.")
+        pass
+      else:
+        os.system('wget http://ambermd.org/downloads/install_ambertools.sh')
+        os.system('bash install_ambertools.sh -v 3 --prefix $HOME --non-conda')
+        os.chdir(path2)
+        with open('.bashrc', 'a') as file:
+          command40 = "source {0}/amber18/amber.sh\n".format(path2)
+          file.write(command40)
+          file.close()
 
     def install_acpype():
-            command6 = 'git clone https://github.com/t-/acpype.git'
+            command6 = 'git clone https://github.com/alanwilter/acpype.git'
             os.system(command6)
             path4 = path2 + '/acpype'
             os.chdir(path4)
@@ -188,7 +171,7 @@ if __name__ == '__main__':
     def install_plip():
             command8='sudo {0} install python-openbabel'.format(dt)
             os.system(command8)
-            command9='git clone https://github.com/ssalentin/plip.git ~/pliptool'
+            command9='git clone https://github.com/ssalentin/plip.git'
             os.system(command9)
             os.chdir(path2)
             with open('.bashrc', 'a') as file:
@@ -234,9 +217,7 @@ if __name__ == '__main__':
 
     w = Pmw.Group(root, tag_text='Install Packeges')
     w.grid(row=2, column=1)
-    amb1 = Tkinter.Label(w.interior(), text='No select file', bg='white', padx=100, pady=5)
-    amb1.grid(row=3, column=1, padx=10, pady=10)
-
+    
     var1 = BooleanVar()
     var2 = BooleanVar()
     var3 = BooleanVar()
@@ -246,8 +227,6 @@ if __name__ == '__main__':
     b2=Tkinter.Checkbutton(w.interior(), text='         ACPYPE', variable=var2).grid(row=4, column=0, padx=10, pady=10)
     b3=Tkinter.Checkbutton(w.interior(), text='             PLIP', variable=var3).grid(row=5, column=0, padx=10, pady=10)
     b3=Tkinter.Checkbutton(w.interior(), text='     GROMACS', variable=var4).grid(row=6, column=0, padx=10, pady=10)
-    brw1_bt = Tkinter.Button(w.interior(), text='Browse...', command=openamberfile)
-    brw1_bt.grid(row=3, column=2)
     scrollbar = Scrollbar(root)
     scrollbar.grid(row=1, column=3, sticky=W)
     window_txt = Text(root, width=106, height=8, font="Courier 10", yscrollcommand=scrollbar.set)
