@@ -78,7 +78,7 @@ else:
 
 import sys
 import os
-command000="sudo {0} install python-Pmw python-tk python-pandas ".format(dt)
+command000="sudo {0} install python-pmw python-tk python-pandas ".format(dt)
 os.system(command000)
 
 sys.path[:0] = ['../../..']
