@@ -1,0 +1,27 @@
+package:
+  name: ligro
+  version: "0.3"
+
+source:
+  git_rev: "recipe"
+  git_url: https://github.com/lkagami/ligro.git
+  
+requirements:
+  host:
+    - python
+    - setuptools
+
+  run:
+    - python
+    - acpype
+    - plip
+    - biopandas
+
+test:
+  imports:
+    - ligro
+
+about:
+  home: https://github.com/lkagami/ligro
+  license: GPL
+  license_file: LICENSE
