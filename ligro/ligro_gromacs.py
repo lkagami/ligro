@@ -4306,8 +4306,6 @@ def main_init():
   helpmenu.add_command(label="Help Index", command=help)
   helpmenu.add_command(label="About...", command=about)
   menubar.add_cascade(label="Help", menu=helpmenu)
-  img = Tkinter.PhotoImage(file='ic_launcher_.png')
-  root.tk.call('wm', 'iconphoto', root._w, img)
   root.config(menu=menubar)
   root.mainloop()
 
