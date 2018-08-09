@@ -4245,8 +4245,9 @@ def main_init():
   elif gromacs_flag('gmx'):
     pass
   else:
-    print('Please install GROMACS package')
-    quit()
+    print('Please wait to install GROMACS package')
+    os.system('conda install -c bioconda gromacs')
+    pass
 
   print(note)
   root = Tkinter.Tk()
