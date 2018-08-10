@@ -82,6 +82,7 @@ from tempfile import mkstemp
 from shutil import move
 from os import fdopen, remove
 import time
+from PIL import Image, ImageTk
 
 sys.path[:0] = ['../../..']
 
@@ -4306,7 +4307,7 @@ def main_init():
   helpmenu.add_command(label="Help Index", command=help)
   helpmenu.add_command(label="About...", command=about)
   menubar.add_cascade(label="Help", menu=helpmenu)
-  img = Tkinter.PhotoImage(file = r'/ligro/ic_launcher_.png')
+  img = ImageTk.PhotoImage(Image.open('ic_launcher_.png'))
   root.tk.call('wm', 'iconphoto', root._w, img)
   root.config(menu=menubar)
   root.mainloop()
