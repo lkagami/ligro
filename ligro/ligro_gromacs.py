@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 note ="""
----LiGRO - Version 0.3 ---
+---LiGRO - Version 0.4 ---
 
 This software is available to you under the terms of the GPL-3. See ~/ligro/LICENCE for more informations.
 Software is created and maintained by Laboratorio de Sintese Organica Medicinal-LaSOM at
@@ -84,6 +84,8 @@ from os import fdopen, remove
 import time
 from PIL import ImageTk
 import zlib, base64
+from plip.modules import report
+plipver = report.__version__
 
 sys.path[:0] = ['../../..']
 
@@ -102,7 +104,7 @@ def gromacs_flag(name):
             return False
     return True
 
-title = 'LiGRO: Version 0.3'
+title = 'LiGRO: Version 0.4'
 
 class GUI:
     def __init__(self, parent):
@@ -339,7 +341,7 @@ class GUI:
         run_analysis_bt = Tkinter.Button(group_analysis.interior(), text='Run', command=self.RMSD)
         run_analysis_bt.grid(row=0, column=4)
         Tkinter.Label(group_analysis.interior(),text='           ').grid(row=0, column=3)
-        group_plip = Pmw.Group(tab5, tag_text='Protein-Ligand Interaction Profiler (PLIP) v1.4.2')
+        group_plip = Pmw.Group(tab5, tag_text='Protein-Ligand Interaction Profiler (PLIP) v{0}'.format(plipver))
         group_plip.pack(fill='both', expand=1, padx=100, pady=10)
         self.ft = Pmw.EntryField(group_plip.interior(), labelpos='w', value='100', label_text='Frame time (ps):     ')
         self.ft.grid(row=0, column=0, padx=10, pady=10)
@@ -2687,7 +2689,7 @@ class GUI:
             dst = str(self.dist.getvalue())
 
             if gromacs_flag('mdrun'):
-              cmd1 = 'gmx editconf -bt {0} -f complex.pdb -o trpb4solv.pdb -d {1}'.format(bx, dst)
+              cmd1 = 'editconf -bt {0} -f complex.pdb -o trpb4solv.pdb -d {1}'.format(bx, dst)
             elif gromacs_flag('gmx'):
               cmd1 = 'gmx editconf -bt {0} -f complex.pdb -o trpb4solv.pdb -d {1}'.format(bx, dst)
             else:
@@ -3535,14 +3537,14 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
         if gromacs_flag('mdrun'):
           com1= '''echo 43 44 0 | g_energy -f nvt.edr > out1.txt'''
         elif gromacs_flag('gmx'):
-          com1= '''echo 43 44 0 | gmx energy -f nvt.edr > out1.txt'''
+          com1= '''echo 41 42 0 | gmx energy -f nvt.edr > out1.txt'''
         else:
           pass
         os.system(com1)
         if gromacs_flag('mdrun'):
-          com2= '''echo 41 42 0 | g_energy -f nvt2l.edr > out2.txt'''
+          com2= '''echo 9 6 0 | g_energy -f nvt2l.edr > out2.txt'''
         elif gromacs_flag('gmx'):
-          com2= '''echo 41 42 0 | gmx energy -f nvt2l.edr > out2.txt'''
+          com2= '''echo 8 6 0 | gmx energy -f nvt2l.edr > out2.txt'''
         else:
           pass
         os.system(com2)
@@ -3550,10 +3552,10 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
           with open('out1.txt', 'r') as f:
             lines = f.readlines()
             for line in lines:
-              if re.search(r'Coul-14:Protein-LIG', line):
+              if re.search(r'Coul-SR:', line):
                 match0 = re.split(r'\s+', line)
 
-              elif re.search(r'LJ-14:Protein-LIG', line):
+              elif re.search(r'LJ-SR:', line):
                 match1 = re.split(r'\s+', line)
                 pass
         except UnboundLocalError:
@@ -3564,14 +3566,14 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
         coul = match0[1]
         lj = match1[1]
         
-        with open('out1.txt', 'r') as f:
+        with open('out2.txt', 'r') as f:
           lines = f.readlines()
           for line in lines:
-            if re.search(r'Coul-14:Protein-LIG', line):
-              match02 = re.split(r'\s+', line)
+            if re.search(r'Coulomb', line):
+              match02 = re.split(r'\s+\s+', line)
 
-            elif re.search(r'LJ-14:Protein-LIG', line):
-              match12 = re.split(r'\s+', line)
+            elif re.search(r'LJ', line):
+              match12 = re.split(r'\s+\s+', line)
               pass
 
         coul2 = match02[1]
@@ -3883,7 +3885,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
             plt.show()
             data0 = ('min = ' + str(min) + '\nmax = ' + str(max) + '\nmean =' + str(mean))
             text0 = """
-LiGRO v 0.03 - Output of {0}
+LiGRO v 0.04 - Output of {0}
 ---------------------------------------------
             """.format(analysis)
             try:
@@ -4011,7 +4013,7 @@ LiGRO v 0.03 - Output of {0}
             '\t\nRgymean =' + str(g3mean) + '\t\nRgzmin = ' + str(g4min) + '\t\nRgzmax = ' + str(g4max) + '\t\nRgzmean =' + str(
                 g4mean))
             text = """
-LiGRO v 0.03 - Output of {0}
+LiGRO v 0.04 - Output of {0}
 ---------------------------------------------
             """.format(analysis)
             try:
@@ -4073,7 +4075,7 @@ LiGRO v 0.03 - Output of {0}
             plt.show()
             data0 = ('min = ' + str(min) + '\nmax = ' + str(max) + '\nmean =' + str(mean))
             text0 = """
-LiGRO v 0.03 - Output of {0}
+LiGRO v 0.04 - Output of {0}
 ---------------------------------------------
             """.format(analysis)
             try:
@@ -4149,9 +4151,9 @@ LiGRO v 0.03 - Output of {0}
                 pass
 
             if gromacs_flag('mdrun'):
-              com1= '''echo 56 57 0 | g_energy -f md_an.edr > out.txt'''
+              com1= '''echo 9 7 0 | g_energy -f md_an.edr > out.txt'''
             elif gromacs_flag('gmx'):
-              com1= '''echo 56 57 0 | gmx energy -f md_an.edr > out.txt'''
+              com1= '''echo 9 7 0 | gmx energy -f md_an.edr > out.txt'''
             else:
               pass
             os.system(com1)
@@ -4160,11 +4162,11 @@ LiGRO v 0.03 - Output of {0}
             with open('out.txt', 'r') as f:
               lines = f.readlines()
               for line in lines:
-                if re.search(r'Coul-SR:', line):
-                  match0 = re.split(r'\s+', line)
+                if re.search(r'Coulomb', line):
+                  match0 = re.split(r'\s+\s+', line)
 
-                elif re.search(r'LJ-SR:', line):
-                  match1 = re.split(r'\s+', line)
+                elif re.search(r'LJ', line):
+                  match1 = re.split(r'\s+\s+', line)
                   pass
 
             coul = match0[1]
@@ -4185,7 +4187,7 @@ LiGRO v 0.03 - Output of {0}
             try:
               with open('out.txt') as infile, tkFileDialog.asksaveasfile(mode='w', initialdir=path2, filetypes =(("Text File", "*.txt"),("All Files","*.*")),
   title = "Save LJSR-CoulSR IE txt file.", initialfile='LJSR-CoulSR_IE') as outfile:
-                  outfile.write('LiGRO v 0.03\n')
+                  outfile.write('LiGRO v 0.04\n')
                   outfile.write('Energy                      Average   Err.Est.       RMSD  Tot-Drift\n')
                   copy = False
                   for line in infile:
