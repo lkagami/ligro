@@ -6,7 +6,7 @@ Universidade Federal do Rio Grande do Sul.
 
 ## Contributors:
 
-Luciano Porto Kagami
+MSc. Luciano Porto Kagami
 
 [luciano_dot_kagami_at_ufrgs_dot_br](mailto:luciano.kagami@ufrgs.br)
 
