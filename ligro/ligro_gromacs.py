@@ -3537,7 +3537,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
         if gromacs_flag('mdrun'):
           com1= '''echo 42 43 0 | g_energy -f nvt2l.edr > out1.txt'''
         elif gromacs_flag('gmx'):
-          com1= '''echo 42 43 0 | gmx energy -f nvt2l.edr > out1.txt'''
+          com1= '''echo 40 41 0 | gmx energy -f nvt2l.edr > out1.txt'''
         else:
           pass
         os.system(com1)
@@ -3559,7 +3559,12 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
 
         coul = match0[4]
         lj = match1[4]
-        
+        if coul is not None:
+          pass
+        else:
+          mbox.showerror('Error', 'Please try to use other simulation type box (Dodecahedron).')
+          quit()
+
         if gromacs_flag('mdrun'):
           os.system('g_lie -f nvt.edr -o lie_lig.xvg -ligand LIG -Eqq {0} -Elj {1} >> out.txt'.format(coul,lj))
         elif gromacs_flag('gmx'):
