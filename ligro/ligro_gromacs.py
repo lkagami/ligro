@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 note ="""
----LiGRO - Version 0.4 ---
+---LiGRO - Version 0.5 ---
 
 This software is available to you under the terms of the GPL-3. See ~/ligro/LICENCE for more informations.
 Software is created and maintained by Laboratorio de Sintese Organica Medicinal-LaSOM at
@@ -104,7 +104,7 @@ def gromacs_flag(name):
             return False
     return True
 
-title = 'LiGRO: Version 0.4'
+title = 'LiGRO: Version 0.5'
 
 class GUI:
     def __init__(self, parent):
@@ -3535,19 +3535,13 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
         except:
             pass
         if gromacs_flag('mdrun'):
-          com1= '''echo 43 44 0 | g_energy -f nvt.edr > out1.txt'''
+          com1= '''echo 42 43 0 | g_energy -f nvt2l.edr > out1.txt'''
         elif gromacs_flag('gmx'):
-          com1= '''echo 41 42 0 | gmx energy -f nvt.edr > out1.txt'''
+          com1= '''echo 42 43 0 | gmx energy -f nvt2l.edr > out1.txt'''
         else:
           pass
         os.system(com1)
-        if gromacs_flag('mdrun'):
-          com2= '''echo 9 6 0 | g_energy -f nvt2l.edr > out2.txt'''
-        elif gromacs_flag('gmx'):
-          com2= '''echo 8 6 0 | gmx energy -f nvt2l.edr > out2.txt'''
-        else:
-          pass
-        os.system(com2)
+        
         try:
           with open('out1.txt', 'r') as f:
             lines = f.readlines()
@@ -3563,45 +3557,23 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
           quit()
 
 
-        coul = match0[1]
-        lj = match1[1]
+        coul = match0[4]
+        lj = match1[4]
         
-        with open('out2.txt', 'r') as f:
-          lines = f.readlines()
-          for line in lines:
-            if re.search(r'Coulomb', line):
-              match02 = re.split(r'\s+\s+', line)
-
-            elif re.search(r'LJ', line):
-              match12 = re.split(r'\s+\s+', line)
-              pass
-
-        coul2 = match02[1]
-        lj2 = match12[1]
-
         if gromacs_flag('mdrun'):
-          os.system('g_lie -f nvt.edr -o lie_comp.xvg -ligand LIG -Eqq {0} -Elj {1} > out_1.txt'.format(coul,lj))
-          os.system('g_lie -f nvt2l.edr -o lie_lig.xvg -ligand LIG -Eqq {0} -Elj {1} >> out_2.txt'.format(coul2,lj2))
+          os.system('g_lie -f nvt.edr -o lie_lig.xvg -ligand LIG -Eqq {0} -Elj {1} >> out.txt'.format(coul,lj))
         elif gromacs_flag('gmx'):
-          os.system('gmx lie -f nvt.edr -o lie_comp.xvg -ligand LIG -Eqq {0} -Elj {1} > out_1.txt'.format(coul,lj))
-          os.system('gmx lie -f nvt2l.edr -o lie_lig.xvg -ligand LIG -Eqq {0} -Elj {1} >> out_2.txt'.format(coul2,lj2))
+          os.system('gmx lie -f nvt.edr -o lie_lig.xvg -ligand LIG -Eqq {0} -Elj {1} >> out.txt'.format(coul,lj))
         else:
           pass
-        with open('out_1.txt', 'r') as f:
+        with open('out.txt', 'r') as f:
           lines = f.readlines()
           for line in lines:
             if re.search(r'DGbind =', line):
               match001 = re.split(r'\s+', line)
 
-        with open('out_2.txt', 'r') as f:
-          lines = f.readlines()
-          for line in lines:
-            if re.search(r'DGbind =', line):
-              match002 = re.split(r'\s+', line)
         a = float(match001[2])
-        b = float(match002[2])
-        c =float(a+b)
-        y = format(c, '.2f')
+        y = format(a, '.2f')
         self.lie_ener['text'] = str(y)
 
 
@@ -3885,7 +3857,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
             plt.show()
             data0 = ('min = ' + str(min) + '\nmax = ' + str(max) + '\nmean =' + str(mean))
             text0 = """
-LiGRO v 0.04 - Output of {0}
+LiGRO v 0.5 - Output of {0}
 ---------------------------------------------
             """.format(analysis)
             try:
@@ -4013,7 +3985,7 @@ LiGRO v 0.04 - Output of {0}
             '\t\nRgymean =' + str(g3mean) + '\t\nRgzmin = ' + str(g4min) + '\t\nRgzmax = ' + str(g4max) + '\t\nRgzmean =' + str(
                 g4mean))
             text = """
-LiGRO v 0.04 - Output of {0}
+LiGRO v 0.5 - Output of {0}
 ---------------------------------------------
             """.format(analysis)
             try:
@@ -4075,7 +4047,7 @@ LiGRO v 0.04 - Output of {0}
             plt.show()
             data0 = ('min = ' + str(min) + '\nmax = ' + str(max) + '\nmean =' + str(mean))
             text0 = """
-LiGRO v 0.04 - Output of {0}
+LiGRO v 0.5 - Output of {0}
 ---------------------------------------------
             """.format(analysis)
             try:
@@ -4187,7 +4159,7 @@ LiGRO v 0.04 - Output of {0}
             try:
               with open('out.txt') as infile, tkFileDialog.asksaveasfile(mode='w', initialdir=path2, filetypes =(("Text File", "*.txt"),("All Files","*.*")),
   title = "Save LJSR-CoulSR IE txt file.", initialfile='LJSR-CoulSR_IE') as outfile:
-                  outfile.write('LiGRO v 0.04\n')
+                  outfile.write('LiGRO v 0.5\n')
                   outfile.write('Energy                      Average   Err.Est.       RMSD  Tot-Drift\n')
                   copy = False
                   for line in infile:
