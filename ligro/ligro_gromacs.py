@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 note ="""
----LiGRO - Version 0.5 ---
+---LiGRO - Version 0.6 ---
 
 This software is available to you under the terms of the GPL-3. See ~/ligro/LICENCE for more informations.
 Software is created and maintained by Laboratorio de Sintese Organica Medicinal-LaSOM at
@@ -104,7 +104,7 @@ def gromacs_flag(name):
             return False
     return True
 
-title = 'LiGRO: Version 0.5'
+title = 'LiGRO: Version 0.6'
 
 class GUI:
     def __init__(self, parent):
@@ -637,8 +637,7 @@ class GUI:
             else:
                 c_ion = '-conc ' + self.ion_cc.getvalue()
             if gromacs_flag('mdrun'):
-              cmd2 = 'echo SOL|genion -s ion.tpr -o trpb4em.pdb -neutral {} -p trp.top'.format(c_ion)
-              os.system(cmd2)
+              cmd2 = 'echo SOL|genion -s ion.tpr -o trpb4em.pdb -neutral {} -p trp.top'.format(c_ion)              
             elif gromacs_flag('gmx'):
               cmd2 = 'echo SOL|gmx genion -s ion.tpr -o trpb4em.pdb -neutral {} -p trp.top'.format(c_ion)
               
@@ -2643,12 +2642,12 @@ class GUI:
         ig = self.hb.getvar('var1')
         if gromacs_flag('mdrun'):
           cmd = 'pdb2gmx -ff {0} -f protein_clean.pdb -o trp.pdb -p trp.top -water {1} {2}'.format(ff, wt, ig)
+          out_pdb2gmx = os.system(cmd)
         elif gromacs_flag('gmx'):
           cmd = 'gmx pdb2gmx -ff {0} -f protein_clean.pdb -o trp.pdb -p trp.top -water {1} {2}'.format(ff, wt, ig)
-        else:
-          pass
-        out_pdb2gmx = os.system(cmd)
-        if out_pdb2gmx == 0:
+          out_pdb2gmx = os.system(cmd)
+          
+        if out_pdb2gmx == 0:  
           try:
             pmol = PandasMol2().read_mol2('Ligand.mol2')
             subst = pmol.df.iloc[0]['subst_name']
@@ -2664,14 +2663,14 @@ class GUI:
           except:
             mbox.showerror("Error", "Mol2 file not recognized.. Please try again.")
             quit()
-          
+
           cm = str(self.cm_menu.getcurselection())
           nc = str(self.nc.getvalue())
           mt = str(self.mult.getvalue())
           at = str(self.at_menu.getcurselection())
           cmdd = 'acpype -i Ligand.mol2 -c {0} -n {1} -m {2} -a {3}'.format(cm, nc, mt, at)
-          acp2 = os.system(cmdd)
-          if acp2 ==0:
+          acp = os.system(cmdd)
+          if acp == 0:
             os.system('grep -h ATOM trp.pdb Ligand.acpype/Ligand_NEW.pdb > complex.pdb')
 
             if ff != 'oplsaa':
@@ -2687,67 +2686,42 @@ class GUI:
             os.system('mv Complex2.top trp.top')
             bx = str(self.bx_menu.getcurselection())
             dst = str(self.dist.getvalue())
-
             if gromacs_flag('mdrun'):
               cmd1 = 'editconf -bt {0} -f complex.pdb -o trpb4solv.pdb -d {1}'.format(bx, dst)
+              os.system(cmd1)
             elif gromacs_flag('gmx'):
               cmd1 = 'gmx editconf -bt {0} -f complex.pdb -o trpb4solv.pdb -d {1}'.format(bx, dst)
-            else:
-              pass
-            os.system(cmd1)
+              os.system(cmd1)
             if gromacs_flag('mdrun'):
               os.system('genbox -cp trpb4solv.pdb -cs spc216.gro -o trpb4ion.pdb -p trp.top')
-              os.system('''
-                          cat << EOF >| em.mdp
-                          ; LINES STARTING WITH ';' ARE COMMENTS
-                          title   = Minimization  ; Title of run
-
-                          ; Parameters describing what to do, when to stop and what to save
-                          integrator  = steep   ; Algorithm (steep = steepest descent minimization)
-                          emtol   = 1000.0    ; Stop minimization when the maximum force < 10.0 kJ/mol
-                          emstep      = 0.01      ; Energy step size
-                          nsteps    = 50000     ; Maximum number of (minimization) steps to perform
-                          energygrps  = system  ; Which energy group(s) to write to disk
-
-                          ; Parameters describing how to find the neighbors of each atom and how to calculate the interactions
-                          nstlist       = 1       ; Frequency to update the neighbor list and long range forces
-                          cutoff-scheme   = Verlet
-                          ns_type       = grid    ; Method to determine neighbor list (simple, grid)
-                          rlist       = 1.0   ; Cut-off for making neighbor list (short range forces)
-                          coulombtype     = PME   ; Treatment of long range electrostatic interactions
-                          rcoulomb      = 1.0   ; long range electrostatic cut-off
-                          rvdw        = 1.0   ; long range Van der Waals cut-off
-                          pbc             = xyz     ; Periodic Boundary Conditions
-                          ''')
-              os.system('grompp -f em.mdp -c trpb4ion.pdb -p trp.top -o ion.tpr -maxwarn 1000')
-
             elif gromacs_flag('gmx'):
               os.system('gmx solvate -cp trpb4solv.pdb -cs spc216.gro -o trpb4ion.pdb -p trp.top')
-              os.system('''
-                          cat << EOF >| em.mdp
-                          ; LINES STARTING WITH ';' ARE COMMENTS
-                          title		= Minimization	; Title of run
+            os.system('''
+                        cat << EOF >| em.mdp
+                        ; LINES STARTING WITH ';' ARE COMMENTS
+                        title   = Minimization  ; Title of run
 
-                          ; Parameters describing what to do, when to stop and what to save
-                          integrator	= steep		; Algorithm (steep = steepest descent minimization)
-                          emtol		= 1000.0  	; Stop minimization when the maximum force < 10.0 kJ/mol
-                          emstep      = 0.01      ; Energy step size
-                          nsteps		= 50000	  	; Maximum number of (minimization) steps to perform
-                          energygrps	= system	; Which energy group(s) to write to disk
+                        ; Parameters describing what to do, when to stop and what to save
+                        integrator  = steep   ; Algorithm (steep = steepest descent minimization)
+                        emtol   = 1000.0    ; Stop minimization when the maximum force < 10.0 kJ/mol
+                        emstep      = 0.01      ; Energy step size
+                        nsteps    = 50000     ; Maximum number of (minimization) steps to perform
+                        energygrps  = system  ; Which energy group(s) to write to disk
 
-                          ; Parameters describing how to find the neighbors of each atom and how to calculate the interactions
-                          nstlist		    = 1		    ; Frequency to update the neighbor list and long range forces
-                          cutoff-scheme   = Verlet
-                          ns_type		    = grid		; Method to determine neighbor list (simple, grid)
-                          rlist		    = 1.0		; Cut-off for making neighbor list (short range forces)
-                          coulombtype	    = PME		; Treatment of long range electrostatic interactions
-                          rcoulomb	    = 1.0		; long range electrostatic cut-off
-                          rvdw		    = 1.0		; long range Van der Waals cut-off
-                          pbc             = xyz 		; Periodic Boundary Conditions
-                          ''')
+                        ; Parameters describing how to find the neighbors of each atom and how to calculate the interactions
+                        nstlist       = 1       ; Frequency to update the neighbor list and long range forces
+                        cutoff-scheme   = Verlet
+                        ns_type       = grid    ; Method to determine neighbor list (simple, grid)
+                        rlist       = 1.0   ; Cut-off for making neighbor list (short range forces)
+                        coulombtype     = PME   ; Treatment of long range electrostatic interactions
+                        rcoulomb      = 1.0   ; long range electrostatic cut-off
+                        rvdw        = 1.0   ; long range Van der Waals cut-off
+                        pbc             = xyz     ; Periodic Boundary Conditions
+                        ''')
+            if gromacs_flag('mdrun'):
+              os.system('grompp -f em.mdp -c trpb4ion.pdb -p trp.top -o ion.tpr -maxwarn 1000')
+            elif gromacs_flag('gmx'):
               os.system('gmx grompp -f em.mdp -c trpb4ion.pdb -p trp.top -o ion.tpr -maxwarn 1000')
-            else:
-              pass
 
             if self.ion_menu.getcurselection() == 'Na (Number)':
                 c_ion = '-np ' + self.ion_cc.getvalue()
@@ -2755,140 +2729,139 @@ class GUI:
                 c_ion = '-nn ' + self.ion_cc.getvalue()
             else:
                 c_ion = '-conc ' + self.ion_cc.getvalue()
-
             if gromacs_flag('mdrun'):
               cmd2 = 'echo SOL|genion -s ion.tpr -o trpb4em.pdb -neutral {} -p trp.top'.format(c_ion)
+              
             elif gromacs_flag('gmx'):
               cmd2 = 'echo SOL|gmx genion -s ion.tpr -o trpb4em.pdb -neutral {} -p trp.top'.format(c_ion)
-            
-            else:
-              pass
-
+              
             os.system(cmd2)
 
             inte = self.min_menu.getcurselection()
 
             nst = self.step.getvalue()
 
-            cmd3 = '''
+            if gromacs_flag('mdrun'):
+              cmd3 = '''
+              cat << EOF >| em_real.mdp
+              ; LINES STARTING WITH ';' ARE COMMENTS
+              title   = Minimization  ; Title of run
+
+              ; Parameters describing what to do, when to stop and what to save
+              integrator  = steep   ; Algorithm (steep = steepest descent minimization)
+              emtol   = 1000.0    ; Stop minimization when the maximum force < 10.0 kJ/mol
+              emstep      = 0.01      ; Energy step size
+              nsteps    = {0}     ; Maximum number of (minimization) steps to perform
+              energygrps  = Protein LIG ; Which energy group(s) to write to disk
+
+              ; Parameters describing how to find the neighbors of each atom and how to calculate the interactions
+              nstlist   = 1       ; Frequency to update the neighbor list and long range forces
+              ns_type   = grid    ; Method to determine neighbor list (simple, grid)
+              rlist   = 1.0   ; Cut-off for making neighbor list (short range forces)
+              coulombtype = PME   ; Treatment of long range electrostatic interactions
+              rcoulomb  = 1.0   ; long range electrostatic cut-off
+              rvdw    = 1.0   ; long range Van der Waals cut-off
+              pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
+              '''.format(nst)
+              cmd4 = '''
+              cat << EOF >| em_real.mdp
+              ; LINES STARTING WITH ';' ARE COMMENTS
+              title   = Minimization  ; Title of run
+
+              ; Parameters describing what to do, when to stop and what to save
+              integrator  = cg    ; Algorithm (steep = steepest descent minimization)
+              emtol   = 1000.0    ; Stop minimization when the maximum force < 10.0 kJ/mol
+              emstep      = 0.01      ; Energy step size
+              nsteps    = {0}     ; Maximum number of (minimization) steps to perform
+              energygrps  = Protein LIG ; Which energy group(s) to write to disk
+
+              ; Parameters describing how to find the neighbors of each atom and how to calculate the interactions
+              nstlist   = 1       ; Frequency to update the neighbor list and long range forces
+              ns_type   = grid    ; Method to determine neighbor list (simple, grid)
+              rlist   = 1.0   ; Cut-off for making neighbor list (short range forces)
+              coulombtype = PME   ; Treatment of long range electrostatic interactions
+              rcoulomb  = 1.0   ; long range electrostatic cut-off
+              rvdw    = 1.0   ; long range Van der Waals cut-off
+              pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
+              '''.format(nst)
+
+            elif gromacs_flag('gmx'):
+
+              cmd3 = '''
                 cat << EOF >| em_real.mdp
-                ;LINES STARTING WITH ';' ARE COMMENTS
-                title		= Minimization	; Title of run
+                ; LINES STARTING WITH ';' ARE COMMENTS
+                title   = Minimization  ; Title of run
 
                 ; Parameters describing what to do, when to stop and what to save
-                integrator	= steep		; Algorithm (steep = steepest descent minimization)
-                emtol		= 1000.0  	; Stop minimization when the maximum force < 10.0 kJ/mol
+                integrator  = steep   ; Algorithm (steep = steepest descent minimization)
+                emtol   = 1000.0    ; Stop minimization when the maximum force < 10.0 kJ/mol
                 emstep      = 0.01      ; Energy step size
-                nsteps		= {0}	  	; Maximum number of (minimization) steps to perform
-                energygrps	= Protein 	; Which energy group(s) to write to disk
+                nsteps    = {0}     ; Maximum number of (minimization) steps to perform
+                energygrps  = Protein LIG ; Which energy group(s) to write to disk
 
                 ; Parameters describing how to find the neighbors of each atom and how to calculate the interactions
-                nstlist		    = 1		    ; Frequency to update the neighbor list and long range forces
+                nstlist       = 1       ; Frequency to update the neighbor list and long range forces
                 cutoff-scheme   = Verlet
-                ns_type		    = grid		; Method to determine neighbor list (simple, grid)
-                rlist		    = 1.0		; Cut-off for making neighbor list (short range forces)
-                coulombtype	    = PME		; Treatment of long range electrostatic interactions
-                rcoulomb	    = 1.0		; long range electrostatic cut-off
-                rvdw		    = 1.0		; long range Van der Waals cut-off
-                pbc		        = xyz 		; Periodic Boundary Conditions
+                ns_type       = grid    ; Method to determine neighbor list (simple, grid)
+                rlist       = 1.0   ; Cut-off for making neighbor list (short range forces)
+                coulombtype     = PME   ; Treatment of long range electrostatic interactions
+                rcoulomb      = 1.0   ; long range electrostatic cut-off
+                rvdw        = 1.0   ; long range Van der Waals cut-off
+                pbc           = xyz     ; Periodic Boundary Conditions
                 EOF
                 '''.format(nst)
-            if gromacs_flag('mdrun'): 
-              '''
-               cat << EOF >| em_real.mdp
-               ; LINES STARTING WITH ';' ARE COMMENTS
-               title   = Minimization  ; Title of run
+              cmd4 = '''
+                cat << EOF >| em_real.mdp
+                ; LINES STARTING WITH ';' ARE COMMENTS
+                title   = Minimization  ; Title of run
 
-               ; Parameters describing what to do, when to stop and what to save
-               integrator  = cg    ; Algorithm (steep = steepest descent minimization)
-               emtol   = 1000.0    ; Stop minimization when the maximum force < 10.0 kJ/mol
-               emstep      = 0.01      ; Energy step size
-               nsteps    = {0}     ; Maximum number of (minimization) steps to perform
-               energygrps  = Protein LIG ; Which energy group(s) to write to disk
-               ; Parameters describing how to find the neighbors of each atom and how to calculate the interactions
-               nstlist   = 1       ; Frequency to update the neighbor list and long range forces
-               ns_type   = grid    ; Method to determine neighbor list (simple, grid)
-               rlist   = 1.0   ; Cut-off for making neighbor list (short range forces)
-               coulombtype = PME   ; Treatment of long range electrostatic interactions
-               rcoulomb  = 1.0   ; long range electrostatic cut-off
-               rvdw    = 1.0   ; long range Van der Waals cut-off
-               pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
-               '''.format(nst)
+                ; Parameters describing what to do, when to stop and what to save
+                integrator  = cg    ; Algorithm (steep = steepest descent minimization)
+                emtol   = 1000.0    ; Stop minimization when the maximum force < 10.0 kJ/mol
+                emstep      = 0.01      ; Energy step size
+                nsteps    = {0}     ; Maximum number of (minimization) steps to perform
+                energygrps  = Protein LIG ; Which energy group(s) to write to disk
 
-              if inte == 'SD Algorithm':
-                os.system(cmd3)
-                os.system('grompp -f em_real.mdp -c trpb4em.pdb -p trp.top -o em.tpr -maxwarn 1000')
-                os.system('mdrun -v -deffnm em')
-                os.system('''
-                make_ndx -f em.gro -o index2.ndx << EOF
-                "Protein" | "Other"
-                q
-                EOF ''')
-                os.system('''
-                trjconv -f em.gro -s em.tpr -pbc nojump -ur compact -center -o em_2.gro -n index2.ndx << EOF
-                Protein_Other
-                System
-                EOF ''')
-                os.system('''
-                mv em_2.gro em.gro ''')
-                os.system('''
-                trjconv -f em.gro -s em.tpr -pbc mol -ur compact -center -o em_2.pdb -n index2.ndx << EOF
-                Protein_Other
-                System
+                ; Parameters describing how to find the neighbors of each atom and how to calculate the interactions
+                nstlist       = 1       ; Frequency to update the neighbor list and long range forces
+                cutoff-scheme   = Verlet
+                ns_type       = grid    ; Method to determine neighbor list (simple, grid)
+                rlist       = 1.0   ; Cut-off for making neighbor list (short range forces)
+                coulombtype     = PME   ; Treatment of long range electrostatic interactions
+                rcoulomb      = 1.0   ; long range electrostatic cut-off
+                rvdw        = 1.0   ; long range Van der Waals cut-off
+                pbc           = xyz     ; Periodic Boundary Conditions
                 EOF
-                ''')
-                
-              else:
-                  os.system(cmd3)
+                '''.format(nst)
+            else:
+              pass
+
+            if inte == 'SD Algorithm':
+                os.system(cmd3)
+                if gromacs_flag('mdrun'):
                   os.system('grompp -f em_real.mdp -c trpb4em.pdb -p trp.top -o em.tpr -maxwarn 1000')
                   os.system('mdrun -v -deffnm em')
-                  os.system(cmd4)
-                  os.system('grompp -f em_real.mdp -c em.gro -p trp.top -o em.tpr -maxwarn 1000')
-                  os.system('mdrun -v -deffnm em')
                   os.system('''
-                              make_ndx -f em.gro -o index2.ndx << EOF
-                              "Protein" | "Other"
-                              q
-                              EOF ''')
+                  make_ndx -f em.gro -o index2.ndx << EOF
+                  "Protein" | "Other"
+                  q
+                  EOF ''')
                   os.system('''
-                              trjconv -f em.gro -s em.tpr -pbc nojump -ur compact -center -o em_2.gro -n index2.ndx << EOF
-                              Protein_Other
-                              System
-                              EOF ''')
+                  trjconv -f em.gro -s em.tpr -pbc nojump -ur compact -center -o em_2.gro -n index2.ndx << EOF
+                  Protein_Other
+                  System
+                  EOF ''')
                   os.system('''
-                              mv em_2.gro em.gro ''')
+                  mv em_2.gro em.gro ''')
                   os.system('''
-                              trjconv -f em.gro -s em.tpr -pbc mol -ur compact -center -o em_2.pdb -n index2.ndx << EOF
-                              Protein_Other
-                              System
-                              EOF
-                              ''')
-            elif gromacs_flag('gmx'):
-              cmd4 = '''cat << EOF >| em_real.mdp
-                   LINES STARTING WITH ';' ARE COMMENTS
-                  title		= Minimization	; Title of run
-
-                  ; Parameters describing what to do, when to stop and what to save
-                  integrator	= cg		; Algorithm (steep = steepest descent minimization)
-                  emtol		= 1000.0  	; Stop minimization when the maximum force < 10.0 kJ/mol
-                  emstep      = 0.01      ; Energy step size
-                  nsteps		= {0}	  	; Maximum number of (minimization) steps to perform
-                  energygrps	= Protein 	; Which energy group(s) to write to disk
-
-                  ; Parameters describing how to find the neighbors of each atom and how to calculate the interactions
-                  nstlist		    = 1		    ; Frequency to update the neighbor list and long range forces
-                  cutoff-scheme   = Verlet
-                  ns_type		    = grid		; Method to determine neighbor list (simple, grid)
-                  rlist		    = 1.0		; Cut-off for making neighbor list (short range forces)
-                  coulombtype	    = PME		; Treatment of long range electrostatic interactions
-                  rcoulomb	    = 1.0		; long range electrostatic cut-off
-                  rvdw		    = 1.0		; long range Van der Waals cut-off
-                  pbc		        = xyz 		; Periodic Boundary Conditions
+                  trjconv -f em.gro -s em.tpr -pbc mol -ur compact -center -o em_2.pdb -n index2.ndx << EOF
+                  Protein_Other
+                  System
                   EOF
-                          '''.format(nst)
-
-              if inte == 'SD Algorithm':
-                  os.system(cmd3)
+                  ''')
+                  os.system('''
+                          mv em_2.pdb em.pdb ''')
+                elif gromacs_flag('gmx'):
                   os.system('gmx grompp -f em_real.mdp -c trpb4em.pdb -p trp.top -o em.tpr -maxwarn 1000')
                   os.system('gmx mdrun -v -deffnm em')
                   os.system('''
@@ -2909,44 +2882,72 @@ class GUI:
                   System
                   EOF
                   ''')
-                  
+                  os.system('''
+                          mv em_2.pdb em.pdb ''')
+
+            else:
+              if gromacs_flag('mdrun'):
+                os.system(cmd3)
+                os.system('grompp -f em_real.mdp -c trpb4em.pdb -p trp.top -o em.tpr -maxwarn 1000')
+                os.system('mdrun -v -deffnm em')
+                os.system(cmd4)
+                os.system('grompp -f em_real.mdp -c em.gro -p trp.top -o em.tpr -maxwarn 1000')
+                os.system('mdrun -v -deffnm em')
+                os.system('''
+                            make_ndx -f em.gro -o index2.ndx << EOF
+                            "Protein" | "Other"
+                            q
+                            EOF ''')
+                os.system('''
+                            trjconv -f em.gro -s em.tpr -pbc nojump -ur compact -center -o em_2.gro -n index2.ndx << EOF
+                            Protein_Other
+                            System
+                            EOF ''')
+                os.system('''
+                            mv em_2.gro em.gro ''')
+                os.system('''
+                            trjconv -f em.gro -s em.tpr -pbc mol -ur compact -center -o em_2.pdb -n index2.ndx << EOF
+                            Protein_Other
+                            System
+                            EOF
+                            ''')
+                os.system('mv em_2.pdb em.pdb')
+
+              elif gromacs_flag('gmx'):
+                os.system(cmd3)
+                os.system('gmx grompp -f em_real.mdp -c trpb4em.pdb -p trp.top -o em.tpr -maxwarn 1000')
+                os.system('gmx mdrun -v -deffnm em')
+                os.system(cmd4)
+                os.system('gmx grompp -f em_real.mdp -c em.gro -p trp.top -o em.tpr -maxwarn 1000')
+                os.system('gmx mdrun -v -deffnm em')
+                os.system('''
+                            gmx make_ndx -f em.gro -o index2.ndx << EOF
+                            "Protein" | "Other"
+                            q
+                            EOF ''')
+                os.system('''
+                            gmx trjconv -f em.gro -s em.tpr -pbc nojump -ur compact -center -o em_2.gro -n index2.ndx << EOF
+                            Protein_Other
+                            System
+                            EOF ''')
+                os.system('''
+                            mv em_2.gro em.gro ''')
+                os.system('''
+                            gmx trjconv -f em.gro -s em.tpr -pbc mol -ur compact -center -o em_2.pdb -n index2.ndx << EOF
+                            Protein_Other
+                            System
+                            EOF
+                            ''')
+                os.system('mv em_2.pdb em.pdb')
 
               else:
-                  os.system(cmd3)
-                  os.system('gmx grompp -f em_real.mdp -c trpb4em.pdb -p trp.top -o em.tpr -maxwarn 1000')
-                  os.system('gmx mdrun -v -deffnm em')
-                  os.system(cmd4)
-                  os.system('gmx grompp -f em_real.mdp -c em.gro -p trp.top -o em.tpr -maxwarn 1000')
-                  os.system('gmx mdrun -v -deffnm em')
-                  os.system('''
-                              gmx make_ndx -f em.gro -o index2.ndx << EOF
-                              "Protein" | "Other"
-                              q
-                              EOF ''')
-                  os.system('''
-                              gmx trjconv -f em.gro -s em.tpr -pbc nojump -ur compact -center -o em_2.gro -n index2.ndx << EOF
-                              Protein_Other
-                              System
-                              EOF ''')
-                  os.system('''
-                              mv em_2.gro em.gro ''')
-                  os.system('''
-                              gmx trjconv -f em.gro -s em.tpr -pbc mol -ur compact -center -o em_2.pdb -n index2.ndx << EOF
-                              Protein_Other
-                              System
-                              EOF
-                              ''')
-            else:
-              pass
-                
-            os.system('mv em_2.pdb em.pdb')
-
+                pass
 
             stnvt = str(self.time_nvt.getvalue())
+            stnpt = str(self.time_npt.getvalue())
+            stmd = str(self.time_md.getvalue())
             temp = str(self.temperature.getvalue())
             t_st = str(self.time_st.getvalue())
-
-            
 
             if gromacs_flag('mdrun'):
               cmd5 = '''
@@ -2975,9 +2976,8 @@ class GUI:
               rlist       = 0.9       ; short-range neighborlist cutoff (in nm)
               rcoulomb    = 0.9       ; short-range electrostatic cutoff (in nm)
               rvdw        = 1.4       ; short-range van der Waals cutoff (in nm)
-              vdwtype             =  Cut-off
               ; Electrostatics
-              coulombtype     = Cut-off       ; Particle Mesh Ewald for long-range electrostatics
+              coulombtype     = PME       ; Particle Mesh Ewald for long-range electrostatics
               pme_order       = 4         ; cubic interpolation
               fourierspacing  = 0.16      ; grid spacing for FFT
               ; Temperature coupling
@@ -2997,10 +2997,8 @@ class GUI:
               gen_seed    = -1        ; generate a random seed'
               '''.format(stnvt, t_st, temp)
 
-
             elif gromacs_flag('gmx'):
-              cmd5 = '''
-              cat << EOF >| nvt.mdp
+              cmd5 = '''cat << EOF >| nvt.mdp
               title       = Protein-ligand complex NVT equilibration
               define      = -DPOSRES  ; position restrain the protein and ligand
               ; Run parameters
@@ -3025,9 +3023,9 @@ class GUI:
               nstlist         = 10        ; 20 fs, largely irrelevant with Verlet
               rcoulomb        = 1.4       ; short-range electrostatic cutoff (in nm)
               rvdw            = 1.4       ; short-range van der Waals cutoff (in nm)
-              vdwtype             =  Cut-off
               ; Electrostatics
-              coulombtype     = Cut-off       ; Particle Mesh Ewald for long-range electrostatics
+              coulombtype     = PME       ; Particle Mesh Ewald for long-range electrostatics
+              pme_order       = 4         ; cubic interpolation
               fourierspacing  = 0.16      ; grid spacing for FFT
               ; Temperature coupling
               tcoupl      = V-rescale                     ; modified Berendsen thermostat
@@ -3046,11 +3044,224 @@ class GUI:
               gen_seed    = -1        ; generate a random seed
               EOF
               '''.format(stnvt, t_st, temp)
-
             else:
               pass
 
             os.system(cmd5)
+
+            if gromacs_flag('mdrun'):
+              cmd6 = '''
+              cat << EOF >| npt.mdp
+              title       = Protein-ligand complex NPT equilibration
+              define      = -DPOSRES  ; position restrain the protein and ligand
+              ; Run parameters
+              integrator  = md        ; leap-frog integrator
+              nsteps      = {0}     ; 2 * 50000 = 100 ps
+              dt          = {1}     ; 2 fs
+              ; Output control
+              nstxout     = 100       ; save coordinates every 0.2 ps
+              nstvout     = 100       ; save velocities every 0.2 ps
+              nstenergy   = 100       ; save energies every 0.2 ps
+              nstlog      = 100       ; update log file every 0.2 ps
+              energygrps  = Protein LIG
+              ; Bond parameters
+              continuation    = yes           ; first dynamics run
+              constraint_algorithm = lincs    ; holonomic constraints
+              constraints     = all-bonds     ; all bonds (even heavy atom-H bonds) constrained
+              lincs_iter      = 1             ; accuracy of LINCS
+              lincs_order     = 4             ; also related to accuracy
+              ; Neighborsearching
+              ns_type     = grid      ; search neighboring grid cells
+              nstlist     = 5         ; 10 fs
+              rlist       = 0.9       ; short-range neighborlist cutoff (in nm)
+              rcoulomb    = 0.9       ; short-range electrostatic cutoff (in nm)
+              rvdw        = 1.4       ; short-range van der Waals cutoff (in nm)
+              ; Electrostatics
+              coulombtype     = PME       ; Particle Mesh Ewald for long-range electrostatics
+              pme_order       = 4         ; cubic interpolation
+              fourierspacing  = 0.16      ; grid spacing for FFT
+              ; Temperature coupling
+              tcoupl      = V-rescale                     ; modified Berendsen thermostat
+              tc-grps     = Protein non-Protein    ; two coupling groups - more accurate
+              tau_t       = 0.1   0.1                    ; time constant, in ps
+              ref_t       = {2}  {2}                    ; reference temperature, one for each group, in K
+              ; Pressure coupling
+              pcoupl      = Parrinello-Rahman             ; pressure coupling is on for NPT
+              pcoupltype  = isotropic                     ; uniform scaling of box vectors
+              tau_p       = 2.0                           ; time constant, in ps
+              ref_p       = 1.0                           ; reference pressure, in bar
+              compressibility = 4.5e-5                    ; isothermal compressibility of water, bar^-1
+              refcoord_scaling    = com
+              ; Periodic boundary conditions
+              pbc         = xyz       ; 3-D PBC
+              ; Dispersion correction
+              DispCorr    = EnerPres  ; account for cut-off vdW scheme
+              ; Velocity generation
+              gen_vel     = no        ; velocity generation off after NVT
+              '''.format(stnpt, t_st, temp)
+
+
+            elif gromacs_flag('gmx'):
+
+              cmd6 = '''
+              cat << EOF >| npt.mdp
+              title       = Protein-ligand complex NPT equilibration
+              define      = -DPOSRES  ; position restrain the protein and ligand
+              ; Run parameters
+              integrator  = md        ; leap-frog integrator
+              nsteps      = {0}     ; 2 * 50000 = 100 ps
+              dt          = {1}     ; 2 fs
+              ; Output control
+              nstxout     = 500       ; save coordinates every 1.0 ps
+              nstvout     = 500       ; save velocities every 1.0 ps
+              nstenergy   = 500       ; save energies every 1.0 ps
+              nstlog      = 500       ; update log file every 1.0 ps
+              energygrps  = Protein LIG
+              ; Bond parameters
+              continuation    = yes           ; first dynamics run
+              constraint_algorithm = lincs    ; holonomic constraints
+              constraints     = all-bonds     ; all bonds (even heavy atom-H bonds) constrained
+              lincs_iter      = 1             ; accuracy of LINCS
+              lincs_order     = 4             ; also related to accuracy
+              ; Neighborsearching
+              cutoff-scheme   = Verlet
+              ns_type         = grid      ; search neighboring grid cells
+              nstlist         = 10        ; 20 fs, largely irrelevant with Verlet
+              rcoulomb        = 1.4       ; short-range electrostatic cutoff (in nm)
+              rvdw            = 1.4       ; short-range van der Waals cutoff (in nm)
+              ; Electrostatics
+              coulombtype     = PME       ; Particle Mesh Ewald for long-range electrostatics
+              pme_order       = 4         ; cubic interpolation
+              fourierspacing  = 0.16      ; grid spacing for FFT
+              ; Temperature coupling
+              tcoupl      = V-rescale                     ; modified Berendsen thermostat
+              tc-grps     = Protein non-Protein    ; two coupling groups - more accurate
+              tau_t       = 0.1   0.1                     ; time constant, in ps
+              ref_t       = {2}   {2}                     ; reference temperature, one for each group, in K
+              ; Pressure coupling
+              pcoupl      = Parrinello-Rahman             ; pressure coupling is on for NPT
+              pcoupltype  = isotropic                     ; uniform scaling of box vectors
+              tau_p       = 2.0                           ; time constant, in ps
+              ref_p       = 1.0                           ; reference pressure, in bar
+              compressibility = 4.5e-5                    ; isothermal compressibility of water, bar^-1
+              refcoord_scaling    = com
+              ; Periodic boundary conditions
+              pbc         = xyz       ; 3-D PBC
+              ; Dispersion correction
+              DispCorr    = EnerPres  ; account for cut-off vdW scheme
+              ; Velocity generation
+              gen_vel     = no        ; velocity generation off after NVT
+              EOF
+              '''.format(stnpt, t_st, temp)
+            else:
+              pass
+
+            os.system(cmd6)
+
+
+            if gromacs_flag('mdrun'):
+              cmd7 = '''
+              cat << EOF >| md.mdp
+              title       = Protein-ligand complex MD simulation
+              ; Run parameters
+              integrator  = md        ; leap-frog integrator
+              nsteps      = {0}    ; 2 * 500000 = 1000 ps (1 ns)
+              dt          = {1}     ; 2 fs
+              ; Output control
+              nstxout                  = 0                     ; [steps] freq to write coordinates to trajectory
+              nstvout                  = 0                 ; [steps] freq to write velocities to trajectory
+              nstfout                  = 0                     ; [steps] freq to write forces to trajectory
+              nstlog                   = 100                   ; [steps] freq to write energies to log file
+              nstenergy                = 500                   ; [steps] freq to write energies to energy file
+              nstxtcout                = 500                   ; [steps] freq to write coordinates to xtc trajectory
+              xtc_precision            = 1000                  ; [real] precision to write xtc trajectory
+              xtc_grps                 = System                ; group(s) to write to xtc trajectory
+              ; Bond parameters
+              continuation    = yes           ; first dynamics run
+              constraint_algorithm = lincs    ; holonomic constraints
+              constraints     = all-bonds     ; all bonds (even heavy atom-H bonds) constrained
+              lincs_iter      = 1             ; accuracy of LINCS
+              lincs_order     = 4             ; also related to accuracy
+              ; Neighborsearching
+              ns_type     = grid      ; search neighboring grid cells
+              nstlist     = 5         ; 10 fs
+              rlist       = 0.9       ; short-range neighborlist cutoff (in nm)
+              rcoulomb    = 0.9       ; short-range electrostatic cutoff (in nm)
+              rvdw        = 1.4       ; short-range van der Waals cutoff (in nm)
+              ; Electrostatics
+              coulombtype     = Cut-off       ;
+              ; Temperature coupling
+              tcoupl      = V-rescale                     ; modified Berendsen thermostat
+              tc-grps     = Protein non-Protein    ; two coupling groups - more accurate
+              tau_t       = 0.1   0.1                    ; time constant, in ps
+              ref_t       = {2}   {2}                   ; reference temperature, one for each group, in K
+              ; Pressure coupling
+              pcoupl      = Parrinello-Rahman             ; pressure coupling is on for NPT
+              pcoupltype  = isotropic                     ; uniform scaling of box vectors
+              tau_p       = 2.0                           ; time constant, in ps
+              ref_p       = 1.0                           ; reference pressure, in bar
+              compressibility = 4.5e-5                    ; isothermal compressibility of water, bar^-1
+              ; Periodic boundary conditions
+              pbc         = xyz      ; 3-D PBC
+              ; Dispersion correction
+              DispCorr    = EnerPres  ; account for cut-off vdW scheme
+              ; Velocity generation
+              gen_vel     = no        ; assign velocities from Maxwell distribution
+              '''.format(stmd, t_st, temp)
+
+            elif gromacs_flag('gmx'):
+              cmd7 = '''
+              cat << EOF >| md.mdp
+              title       = Protein-ligand complex MD simulation
+              ; Run parameters
+              integrator  = md        ; leap-frog integrator
+              nsteps      = {0}    ; 2 * 500000 = 1000 ps (1 ns)
+              dt          = {1}     ; 2 fs
+              ; Output control
+              nstxout             = 0         ; suppress .trr output
+              nstvout             = 0         ; suppress .trr output
+              nstenergy           = 500      ; save energies every 1.0 ps
+              nstlog              = 5000      ; update log file every 10.0 ps
+              nstxout-compressed  = 5000      ; write .xtc trajectory every 10.0 ps
+              compressed-x-grps   = System
+              energygrps          = Protein LIG
+              ; Bond parameters
+              continuation    = yes           ; first dynamics run
+              constraint_algorithm = lincs    ; holonomic constraints
+              constraints     = all-bonds     ; all bonds (even heavy atom-H bonds) constrained
+              lincs_iter      = 1             ; accuracy of LINCS
+              lincs_order     = 4             ; also related to accuracy
+              ; Neighborsearching
+              cutoff-scheme   = Verlet
+              ns_type         = grid      ; search neighboring grid cells
+              nstlist         = 10        ; 20 fs, largely irrelevant with Verlet
+              rcoulomb        = 1.4       ; short-range electrostatic cutoff (in nm)
+              rvdw            = 1.4       ; short-range van der Waals cutoff (in nm)
+              ; Electrostatics
+              coulombtype     = Cut-off       ;
+              ; Temperature coupling
+              tcoupl      = V-rescale                     ; modified Berendsen thermostat
+              tc-grps     = Protein non-Protein    ; two coupling groups - more accurate
+              tau_t       = 0.1   0.1                     ; time constant, in ps
+              ref_t       = {2}   {2}                     ; reference temperature, one for each group, in K
+              ; Pressure coupling
+              pcoupl      = Parrinello-Rahman             ; pressure coupling is on for NPT
+              pcoupltype  = isotropic                     ; uniform scaling of box vectors
+              tau_p       = 2.0                           ; time constant, in ps
+              ref_p       = 1.0                           ; reference pressure, in bar
+              compressibility = 4.5e-5                    ; isothermal compressibility of water, bar^-1
+              ; Periodic boundary conditions
+              pbc         = xyz       ; 3-D PBC
+              ; Dispersion correction
+              DispCorr    = EnerPres  ; account for cut-off vdW scheme
+              ; Velocity generation
+              gen_vel     = no        ; assign velocities from Maxwell distribution
+              EOF
+              '''.format(stmd, t_st, temp)
+            else:
+              pass
+
+            os.system(cmd7)
 
             cmd8='pymol em.pdb'
 
@@ -3071,12 +3282,17 @@ class GUI:
 
               os.system('cat << EOF > | queue.sh')
 
-              os.system('grompp -f nvt.mdp -c em.pdb -p trp.top -o nvt.tpr -maxwarn 1000')
-              os.system('mdrun -v -deffnm nvt')
+              os.system("echo 'grompp -f nvt.mdp -c em.pdb -p trp.top -o nvt.tpr -maxwarn 1000' >> queue.sh")
+              os.system("echo 'mdrun -v -deffnm nvt' >> queue.sh")
+              os.system("echo 'grompp -f npt.mdp -c nvt.gro -p trp.top -o npt.tpr -maxwarn 1000' >> queue.sh")
+              os.system("echo 'mdrun -v -deffnm npt' >> queue.sh")
+              os.system("echo 'grompp -f md.mdp -c npt.gro -p trp.top -o md.tpr -maxwarn 1000' >> queue.sh")
+              os.system("echo 'mdrun -v -deffnm md' >> queue.sh")
+              os.system('chmod 777 queue.sh')
+              os.system('./queue.sh')
 
-
-            elif gromacs_flag('gmx'):    
-              os.system('echo 2|gmx genrestr -f Ligand.acpype/Ligand_GMX.gro -o posre_LIG.itp -fc 1000 1000 1000')
+            elif gromacs_flag('gmx'):
+              os.system('echo 2 | gmx genrestr -f Ligand.acpype/Ligand_GMX.gro -o posre_LIG.itp -fc 1000 1000 1000')
               os.system(r'''
               sed '/posre.itp/{p;s/.*/#endif \n\n; Ligand position restraints \n#ifdef POSRES \n#include "posre_LIG.itp"/;}' trp.top > trp2.top
               ''')
@@ -3084,13 +3300,17 @@ class GUI:
 
               os.system('cat << EOF > | queue.sh')
 
-              os.system('gmx grompp -f nvt.mdp -c em.pdb -p trp.top -o nvt.tpr -r em.gro -maxwarn 1000')
-              os.system('gmx mdrun -v -deffnm nvt')
-            else:
-              pass
+              os.system("echo 'gmx grompp -f nvt.mdp -c em.pdb -p trp.top -o nvt.tpr -r em.gro -maxwarn 1000' >> queue.sh")
+              os.system("echo 'gmx mdrun -v -deffnm nvt' >> queue.sh")
+              os.system("echo 'gmx grompp -f npt.mdp -c nvt.gro -p trp.top -o npt.tpr -r nvt.gro -maxwarn 1000' >> queue.sh")
+              os.system("echo 'gmx mdrun -v -deffnm npt' >> queue.sh")
+              os.system("echo 'gmx grompp -f md.mdp -c npt.gro -p trp.top -o md.tpr -r npt.gro -maxwarn 1000' >> queue.sh")
+              os.system("echo 'gmx mdrun -v -deffnm md' >> queue.sh")
+              os.system('chmod 777 queue.sh')
+              os.system('./queue.sh')
           else:
             mbox.showerror('Error', 'ACPYPE error (Ligand). Process has been cancelled')
-            pass
+            quit()
         else:
           mbox.showerror('Error', 'PDB2GMX error (Receptor). Process has been cancelled')
           quit()
@@ -3387,146 +3607,375 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
             pass
           
           os.system('mv em_2l.pdb eml.pdb')
-
-
-          lie_stnvt = str(self.time_nvt.getvalue())
-          lie_t_st = str(self.time_st.getvalue())
-          lie_temp = str(self.temperature.getvalue())
-
-          
-          if gromacs_flag('mdrun'):
-            liecmd5 = '''
-            cat << EOF >| nvt2.mdp
-            title       = Ligand NVT equilibration
-            define      = -DPOSRES  ; position restrain the protein and ligand
-            ; Run parameters
-            integrator  = md        ; leap-frog integrator
-            nsteps      = {0}     ; 2 * 50000 = 100 ps
-            dt          = {1}     ; 2 fs
-            ; Output control
-            nstxout     = 100       ; save coordinates every 0.2 ps
-            nstvout     = 100       ; save velocities every 0.2 ps
-            nstenergy   = 100       ; save energies every 0.2 ps
-            nstlog      = 100       ; update log file every 0.2 ps
-            energygrps  = LIG
-            ; Bond parameters
-            continuation    = no            ; first dynamics run
-            constraint_algorithm = lincs    ; holonomic constraints
-            constraints     = all-bonds     ; all bonds (even heavy atom-H bonds) constrained
-            lincs_iter      = 1             ; accuracy of LINCS
-            lincs_order     = 4             ; also related to accuracy
-            ; Neighborsearching
-            ns_type     = grid      ; search neighboring grid cells
-            nstlist     = 5         ; 10 fs
-            rlist       = 0.9       ; short-range neighborlist cutoff (in nm)
-            rcoulomb    = 0.9       ; short-range electrostatic cutoff (in nm)
-            rvdw        = 1.4       ; short-range van der Waals cutoff (in nm)
-            vdwtype             =  Cut-off
-            ; Electrostatics
-            coulombtype     = Cut-off   ;
-            pme_order       = 4         ; cubic interpolation
-            fourierspacing  = 0.16      ; grid spacing for FFT
-            ; Temperature coupling
-            tcoupl      = V-rescale                     ; modified Berendsen thermostat
-            tc-grps     = LIG   Water_Ion   ; two coupling groups - more accurate
-            tau_t       = 0.1   0.1                    ; time constant, in ps
-            ref_t       = {2}   {2}                    ; reference temperature, one for each group, in K
-            ; Pressure coupling
-            pcoupl      = no        ; no pressure coupling in NVT
-            ; Periodic boundary conditions
-            pbc         = xyz      ; 3-D PBC
-            ; Dispersion correction
-            DispCorr    = EnerPres  ; account for cut-off vdW scheme
-            ; Velocity generation
-            gen_vel     = yes       ; assign velocities from Maxwell distribution
-            gen_temp    = {2}       ; temperature for Maxwell distribution
-            gen_seed    = -1        ; generate a random seed'
-            '''.format(lie_stnvt, lie_t_st, lie_temp) 
-          elif gromacs_flag('gmx'):  
-            liecmd5 = '''
-            cat << EOF >| nvt2.mdp
-            title       = Ligand NVT equilibration
-            define      = -DPOSRES  ; position restrain the protein and ligand
-            ; Run parameters
-            integrator  = md        ; leap-frog integrator
-            nsteps      = {0}     ; 2 * 50000 = 100 ps
-            dt          = {1}     ; 2 fs
-            ; Output control
-            nstxout     = 500       ; save coordinates every 1.0 ps
-            nstvout     = 500       ; save velocities every 1.0 ps
-            nstenergy   = 500       ; save energies every 1.0 ps
-            nstlog      = 500       ; update log file every 1.0 ps
-            energygrps  = LIG
-            ; Bond parameters
-            continuation    = no            ; first dynamics run
-            constraint_algorithm = lincs    ; holonomic constraints
-            constraints     = all-bonds     ; all bonds (even heavy atom-H bonds) constrained
-            lincs_iter      = 1             ; accuracy of LINCS
-            lincs_order     = 4             ; also related to accuracy
-            ; Neighborsearching
-            cutoff-scheme   = Verlet
-            ns_type         = grid      ; search neighboring grid cells
-            nstlist         = 10        ; 20 fs, largely irrelevant with Verlet
-            rcoulomb        = 1.4       ; short-range electrostatic cutoff (in nm)
-            rvdw            = 1.4       ; short-range van der Waals cutoff (in nm)
-            vdwtype             =  Cut-off
-            ; Electrostatics
-            coulombtype     = Cut-off       ; Particle Mesh Ewald for long-range electrostatics
-            pme_order       = 4         ; cubic interpolation
-            fourierspacing  = 0.16      ; grid spacing for FFT
-            ; Temperature coupling
-            tcoupl      = V-rescale                     ; modified Berendsen thermostat
-            tc-grps     = LIG Water_Ion    ; two coupling groups - more accurate
-            tau_t       = 0.1   0.1                     ; time constant, in ps
-            ref_t       = {2}   {2}                    ; reference temperature, one for each group, in K
-            ; Pressure coupling
-            pcoupl      = no        ; no pressure coupling in NVT
-            ; Periodic boundary conditions
-            pbc         = xyz       ; 3-D PBC
-            ; Dispersion correction
-            DispCorr    = EnerPres  ; account for cut-off vdW scheme
-            ; Velocity generation
-            gen_vel     = yes       ; assign velocities from Maxwell distribution
-            gen_temp    = {2}       ; temperature for Maxwell distribution
-            gen_seed    = -1        ; generate a random seed
-            EOF
-            '''.format(lie_stnvt, lie_t_st, lie_temp)
-          else:
-            pass  
-          os.system(liecmd5)
-
-          liecmd8='pymol eml.pdb'
-
-          os.system(liecmd8)
-
-          if mbox.askyesno('View Complex', 'Is Ligand OK??'):
-              pass
-          else:
-              mbox.showinfo('No', 'Process has been cancelled')
-              pass
-
-          if gromacs_flag('mdrun'):
-            os.system('''
-                        make_ndx -f eml.gro -o index2l.ndx << EOF
-                        "Water" | "Ion"
-                        q
-                        EOF ''')
-            os.system('grompp -f nvt2.mdp -c eml.pdb -p topoll.top -o nvt2l.tpr -n index2l.ndx -maxwarn 1000')
-            os.system('mdrun -v -deffnm nvt2l')    
-          
-          elif gromacs_flag('gmx'):
-
-            os.system('''
-                            gmx make_ndx -f eml.gro -o index2l.ndx << EOF
+          os.system('''
+                            make_ndx -f eml.gro -o index_lie.ndx << EOF
                             "Water" | "Ion"
                             q
                             EOF ''')
-            os.system('gmx grompp -f nvt2.mdp -c eml.pdb -p topoll.top -o nvt2l.tpr -n index2l.ndx -r eml.gro -maxwarn 1000')
-            os.system('gmx mdrun -v -deffnm nvt2l')
+
+
+          stnvt = str(self.time_nvt.getvalue())
+          stnpt = str(self.time_npt.getvalue())
+          stmd = str(self.time_md.getvalue())
+          temp = str(self.temperature.getvalue())
+          t_st = str(self.time_st.getvalue())
+
+          
+          if gromacs_flag('mdrun'):
+              os.system('''
+                            make_ndx -f eml.gro -o index_lie.ndx << EOF
+                            "Water" | "Ion"
+                            q
+                            EOF ''')
+              cmd5 = '''
+              cat << EOF >| nvt2.mdp
+              title       = Ligand NVT
+              define      = -DPOSRES  ; position restrain the protein and ligand
+              ; Run parameters
+              integrator  = md        ; leap-frog integrator
+              nsteps      = {0}     ; 2 * 50000 = 100 ps
+              dt          = {1}     ; 2 fs
+              ; Output control
+              nstxout     = 100       ; save coordinates every 0.2 ps
+              nstvout     = 100       ; save velocities every 0.2 ps
+              nstenergy   = 100       ; save energies every 0.2 ps
+              nstlog      = 100       ; update log file every 0.2 ps
+              energygrps  = LIG
+              ; Bond parameters
+              continuation    = no            ; first dynamics run
+              constraint_algorithm = lincs    ; holonomic constraints
+              constraints     = all-bonds     ; all bonds (even heavy atom-H bonds) constrained
+              lincs_iter      = 1             ; accuracy of LINCS
+              lincs_order     = 4             ; also related to accuracy
+              ; Neighborsearching
+              ns_type     = grid      ; search neighboring grid cells
+              nstlist     = 5         ; 10 fs
+              rlist       = 0.9       ; short-range neighborlist cutoff (in nm)
+              rcoulomb    = 0.9       ; short-range electrostatic cutoff (in nm)
+              rvdw        = 1.4       ; short-range van der Waals cutoff (in nm)
+              ; Electrostatics
+              coulombtype     = PME       ; Particle Mesh Ewald for long-range electrostatics
+              pme_order       = 4         ; cubic interpolation
+              fourierspacing  = 0.16      ; grid spacing for FFT
+              ; Temperature coupling
+              tcoupl      = V-rescale                     ; modified Berendsen thermostat
+              tc-grps     = LIG   Water_Ion   ; two coupling groups - more accurate
+              tau_t       = 0.1   0.1                    ; time constant, in ps
+              ref_t       = {2}   {2}                    ; reference temperature, one for each group, in K
+              ; Pressure coupling
+              pcoupl      = no        ; no pressure coupling in NVT
+              ; Periodic boundary conditions
+              pbc         = xyz      ; 3-D PBC
+              ; Dispersion correction
+              DispCorr    = EnerPres  ; account for cut-off vdW scheme
+              ; Velocity generation
+              gen_vel     = yes       ; assign velocities from Maxwell distribution
+              gen_temp    = {2}       ; temperature for Maxwell distribution
+              gen_seed    = -1        ; generate a random seed'
+              '''.format(stnvt, t_st, temp)
+
+          elif gromacs_flag('gmx'):
+             os.system('''
+                            gmx make_ndx -f eml.gro -o index_lie.ndx << EOF
+                            "Water" | "Ion"
+                            q
+                            EOF ''')
+             cmd5 = '''cat << EOF >| nvt2.mdp
+             title       = Ligand NVT
+             define      = -DPOSRES  ; position restrain the protein and ligand
+             ; Run parameters
+             integrator  = md        ; leap-frog integrator
+             nsteps      = {0}     ; 2 * 50000 = 100 ps
+             dt          = {1}     ; 2 fs
+             ; Output control
+             nstxout     = 500       ; save coordinates every 1.0 ps
+             nstvout     = 500       ; save velocities every 1.0 ps
+             nstenergy   = 500       ; save energies every 1.0 ps
+             nstlog      = 500       ; update log file every 1.0 ps
+             energygrps  = LIG
+             ; Bond parameters
+             continuation    = no            ; first dynamics run
+             constraint_algorithm = lincs    ; holonomic constraints
+             constraints     = all-bonds     ; all bonds (even heavy atom-H bonds) constrained
+             lincs_iter      = 1             ; accuracy of LINCS
+             lincs_order     = 4             ; also related to accuracy
+             ; Neighborsearching
+             cutoff-scheme   = Verlet
+             ns_type         = grid      ; search neighboring grid cells
+             nstlist         = 10        ; 20 fs, largely irrelevant with Verlet
+             rcoulomb        = 1.4       ; short-range electrostatic cutoff (in nm)
+             rvdw            = 1.4       ; short-range van der Waals cutoff (in nm)
+             ; Electrostatics
+             coulombtype     = PME       ; Particle Mesh Ewald for long-range electrostatics
+             pme_order       = 4         ; cubic interpolation
+             fourierspacing  = 0.16      ; grid spacing for FFT
+             ; Temperature coupling
+             tcoupl      = V-rescale                     ; modified Berendsen thermostat
+             tc-grps     = LIG   Water_Ion; two coupling groups - more accurate
+             tau_t       = 0.1   0.1                     ; time constant, in ps
+             ref_t       = {2}   {2}                    ; reference temperature, one for each group, in K
+             ; Pressure coupling
+             pcoupl      = no        ; no pressure coupling in NVT
+             ; Periodic boundary conditions
+             pbc         = xyz       ; 3-D PBC
+             ; Dispersion correction
+             DispCorr    = EnerPres  ; account for cut-off vdW scheme
+             ; Velocity generation
+             gen_vel     = yes       ; assign velocities from Maxwell distribution
+             gen_temp    = {2}       ; temperature for Maxwell distribution
+             gen_seed    = -1        ; generate a random seed
+             EOF
+             '''.format(stnvt, t_st, temp)
           else:
-            pass  
+            pass
+          os.system(cmd5)
+          
+          if gromacs_flag('mdrun'):
+             cmd6 = '''
+             cat << EOF >| npt2.mdp
+             title       = Ligand NPT
+             define      = -DPOSRES  ; position restrain the protein and ligand
+             ; Run parameters
+             integrator  = md        ; leap-frog integrator
+             nsteps      = {0}     ; 2 * 50000 = 100 ps
+             dt          = {1}     ; 2 fs
+             ; Output control
+             nstxout     = 100       ; save coordinates every 0.2 ps
+             nstvout     = 100       ; save velocities every 0.2 ps
+             nstenergy   = 100       ; save energies every 0.2 ps
+             nstlog      = 100       ; update log file every 0.2 ps
+             energygrps  = LIG
+             ; Bond parameters
+             continuation    = yes           ; first dynamics run
+             constraint_algorithm = lincs    ; holonomic constraints
+             constraints     = all-bonds     ; all bonds (even heavy atom-H bonds) constrained
+             lincs_iter      = 1             ; accuracy of LINCS
+             lincs_order     = 4             ; also related to accuracy
+             ; Neighborsearching
+             ns_type     = grid      ; search neighboring grid cells
+             nstlist     = 5         ; 10 fs
+             rlist       = 0.9       ; short-range neighborlist cutoff (in nm)
+             rcoulomb    = 0.9       ; short-range electrostatic cutoff (in nm)
+             rvdw        = 1.4       ; short-range van der Waals cutoff (in nm)
+             ; Electrostatics
+             coulombtype     = PME       ; Particle Mesh Ewald for long-range electrostatics
+             pme_order       = 4         ; cubic interpolation
+             fourierspacing  = 0.16      ; grid spacing for FFT
+             ; Temperature coupling
+             tcoupl      = V-rescale                     ; modified Berendsen thermostat
+             tc-grps     = LIG   Water_Ion    ; two coupling groups - more accurate
+             tau_t       = 0.1   0.1                    ; time constant, in ps
+             ref_t       = {2}  {2}                    ; reference temperature, one for each group, in K
+             ; Pressure coupling
+             pcoupl      = Parrinello-Rahman             ; pressure coupling is on for NPT
+             pcoupltype  = isotropic                     ; uniform scaling of box vectors
+             tau_p       = 2.0                           ; time constant, in ps
+             ref_p       = 1.0                           ; reference pressure, in bar
+             compressibility = 4.5e-5                    ; isothermal compressibility of water, bar^-1
+             refcoord_scaling    = com
+             ; Periodic boundary conditions
+             pbc         = xyz       ; 3-D PBC
+             ; Dispersion correction
+             DispCorr    = EnerPres  ; account for cut-off vdW scheme
+             ; Velocity generation
+             gen_vel     = no        ; velocity generation off after NVT
+             '''.format(stnpt, t_st, temp)
+
+          elif gromacs_flag('gmx'):
+             cmd6 = '''
+             cat << EOF >| npt2.mdp
+             title       = Ligand NPT
+             define      = -DPOSRES  ; position restrain the protein and ligand
+             ; Run parameters
+             integrator  = md        ; leap-frog integrator
+             nsteps      = {0}     ; 2 * 50000 = 100 ps
+             dt          = {1}     ; 2 fs
+             ; Output control
+             nstxout     = 500       ; save coordinates every 1.0 ps
+             nstvout     = 500       ; save velocities every 1.0 ps
+             nstenergy   = 500       ; save energies every 1.0 ps
+             nstlog      = 500       ; update log file every 1.0 ps
+             energygrps  = LIG
+             ; Bond parameters
+             continuation    = yes           ; first dynamics run
+             constraint_algorithm = lincs    ; holonomic constraints
+             constraints     = all-bonds     ; all bonds (even heavy atom-H bonds) constrained
+             lincs_iter      = 1             ; accuracy of LINCS
+             lincs_order     = 4             ; also related to accuracy
+             ; Neighborsearching
+             cutoff-scheme   = Verlet
+             ns_type         = grid      ; search neighboring grid cells
+             nstlist         = 10        ; 20 fs, largely irrelevant with Verlet
+             rcoulomb        = 1.4       ; short-range electrostatic cutoff (in nm)
+             rvdw            = 1.4       ; short-range van der Waals cutoff (in nm)
+             ; Electrostatics
+             coulombtype     = PME       ; Particle Mesh Ewald for long-range electrostatics
+             pme_order       = 4         ; cubic interpolation
+             fourierspacing  = 0.16      ; grid spacing for FFT
+             ; Temperature coupling
+             tcoupl      = V-rescale                     ; modified Berendsen thermostat
+             tc-grps     = LIG   Water_Ion   ; two coupling groups - more accurate
+             tau_t       = 0.1   0.1                     ; time constant, in ps
+             ref_t       = {2}   {2}                     ; reference temperature, one for each group, in K
+             ; Pressure coupling
+             pcoupl      = Parrinello-Rahman             ; pressure coupling is on for NPT
+             pcoupltype  = isotropic                     ; uniform scaling of box vectors
+             tau_p       = 2.0                           ; time constant, in ps
+             ref_p       = 1.0                           ; reference pressure, in bar
+             compressibility = 4.5e-5                    ; isothermal compressibility of water, bar^-1
+             refcoord_scaling    = com
+             ; Periodic boundary conditions
+             pbc         = xyz       ; 3-D PBC
+             ; Dispersion correction
+             DispCorr    = EnerPres  ; account for cut-off vdW scheme
+             ; Velocity generation
+             gen_vel     = no        ; velocity generation off after NVT
+             EOF
+             '''.format(stnpt, t_st, temp)
+          else:
+             pass
+          os.system(cmd6)
+
+          if gromacs_flag('mdrun'):
+             cmd7 = '''
+             cat << EOF >| md2.mdp
+             title       = Ligand MD
+             ; Run parameters
+             integrator  = md        ; leap-frog integrator
+             nsteps      = {0}    ; 2 * 500000 = 1000 ps (1 ns)
+             dt          = {1}     ; 2 fs
+             ; Output control
+             nstxout                  = 0                     ; [steps] freq to write coordinates to trajectory
+             nstvout                  = 0                 ; [steps] freq to write velocities to trajectory
+             nstfout                  = 0                     ; [steps] freq to write forces to trajectory
+             nstlog                   = 100                   ; [steps] freq to write energies to log file
+             nstenergy                = 500                   ; [steps] freq to write energies to energy file
+             nstxtcout                = 500                   ; [steps] freq to write coordinates to xtc trajectory
+             xtc_precision            = 1000                  ; [real] precision to write xtc trajectory
+             xtc_grps                 = System                ; group(s) to write to xtc trajectory
+             ; Bond parameters
+             continuation    = yes           ; first dynamics run
+             constraint_algorithm = lincs    ; holonomic constraints
+             constraints     = all-bonds     ; all bonds (even heavy atom-H bonds) constrained
+             lincs_iter      = 1             ; accuracy of LINCS
+             lincs_order     = 4             ; also related to accuracy
+             ; Neighborsearching
+             ns_type     = grid      ; search neighboring grid cells
+             nstlist     = 5         ; 10 fs
+             rlist       = 0.9       ; short-range neighborlist cutoff (in nm)
+             rcoulomb    = 0.9       ; short-range electrostatic cutoff (in nm)
+             rvdw        = 1.4       ; short-range van der Waals cutoff (in nm)
+             ; Electrostatics
+             coulombtype     = Cut-off       ;
+             ; Temperature coupling
+             tcoupl      = V-rescale                     ; modified Berendsen thermostat
+             tc-grps     = LIG Water_Ion    ; two coupling groups - more accurate
+             tau_t       = 0.1   0.1                    ; time constant, in ps
+             ref_t       = {2}   {2}                   ; reference temperature, one for each group, in K
+             ; Pressure coupling
+             pcoupl      = Parrinello-Rahman             ; pressure coupling is on for NPT
+             pcoupltype  = isotropic                     ; uniform scaling of box vectors
+             tau_p       = 2.0                           ; time constant, in ps
+             ref_p       = 1.0                           ; reference pressure, in bar
+             compressibility = 4.5e-5                    ; isothermal compressibility of water, bar^-1
+             ; Periodic boundary conditions
+             pbc         = xyz      ; 3-D PBC
+             ; Dispersion correction
+             DispCorr    = EnerPres  ; account for cut-off vdW scheme
+             ; Velocity generation
+             gen_vel     = no        ; assign velocities from Maxwell distribution
+             '''.format(stmd, t_st, temp)
+
+          elif gromacs_flag('gmx'):
+             cmd7 = '''
+             cat << EOF >| md2.mdp
+             title       = Ligand MD
+             ; Run parameters
+             integrator  = md        ; leap-frog integrator
+             nsteps      = {0}    ; 2 * 500000 = 1000 ps (1 ns)
+             dt          = {1}     ; 2 fs
+             ; Output control
+             nstxout             = 0         ; suppress .trr output
+             nstvout             = 0         ; suppress .trr output
+             nstenergy           = 500      ; save energies every 1.0 ps
+             nstlog              = 5000      ; update log file every 10.0 ps
+             nstxout-compressed  = 5000      ; write .xtc trajectory every 10.0 ps
+             compressed-x-grps   = System
+             energygrps          = LIG
+             ; Bond parameters
+             continuation    = yes           ; first dynamics run
+             constraint_algorithm = lincs    ; holonomic constraints
+             constraints     = all-bonds     ; all bonds (even heavy atom-H bonds) constrained
+             lincs_iter      = 1             ; accuracy of LINCS
+             lincs_order     = 4             ; also related to accuracy
+             ; Neighborsearching
+             cutoff-scheme   = Verlet
+             ns_type         = grid      ; search neighboring grid cells
+             nstlist         = 10        ; 20 fs, largely irrelevant with Verlet
+             rcoulomb        = 1.4       ; short-range electrostatic cutoff (in nm)
+             rvdw            = 1.4       ; short-range van der Waals cutoff (in nm)
+             ; Electrostatics
+             coulombtype     = Cut-off       ;
+             ; Temperature coupling
+             tcoupl      = V-rescale                     ; modified Berendsen thermostat
+             tc-grps     = LIG Water_Ion    ; two coupling groups - more accurate
+             tau_t       = 0.1   0.1                     ; time constant, in ps
+             ref_t       = {2}   {2}                     ; reference temperature, one for each group, in K
+             ; Pressure coupling
+             pcoupl      = Parrinello-Rahman             ; pressure coupling is on for NPT
+             pcoupltype  = isotropic                     ; uniform scaling of box vectors
+             tau_p       = 2.0                           ; time constant, in ps
+             ref_p       = 1.0                           ; reference pressure, in bar
+             compressibility = 4.5e-5                    ; isothermal compressibility of water, bar^-1
+             ; Periodic boundary conditions
+             pbc         = xyz       ; 3-D PBC
+             ; Dispersion correction
+             DispCorr    = EnerPres  ; account for cut-off vdW scheme
+             ; Velocity generation
+             gen_vel     = no        ; assign velocities from Maxwell distribution
+             EOF
+             '''.format(stmd, t_st, temp)
+          else:
+             pass
+
+          os.system(cmd7)
+
+          cmd8='pymol eml.pdb'
+
+          os.system(cmd8)
+
+          if mbox.askyesno('View Ligand', 'Is solvated ligand OK??'):
+            pass
+          else:
+               mbox.showinfo('No', 'Process has been cancelled')
+               quit()
+
+          if gromacs_flag('mdrun'):
+             os.system('cat << EOF > | queue2.sh')
+             os.system("echo 'grompp -f nvt2.mdp -c eml.pdb -p topoll.top -o nvt2.tpr -n index_lie.ndx -maxwarn 1000' >> queue2.sh")
+             os.system("echo 'mdrun -v -deffnm nvt2' >> queue2.sh")
+             os.system("echo 'grompp -f npt2.mdp -c nvt2.gro -p topoll.top -o npt2.tpr -n index_lie.ndx -maxwarn 1000' >> queue2.sh")
+             os.system("echo 'mdrun -v -deffnm npt2' >> queue2.sh")
+             os.system("echo 'grompp -f md2.mdp -c npt2.gro -p topoll.top -o md2.tpr -n index_lie.ndx -maxwarn 1000' >> queue2.sh")
+             os.system("echo 'mdrun -v -deffnm md2' >> queue2.sh")
+             os.system('chmod 777 queue2.sh')
+             os.system('./queue2.sh')
+
+          elif gromacs_flag('gmx'):
+             os.system('cat << EOF > | queue2.sh')
+             os.system("echo 'gmx grompp -f nvt2.mdp -c eml.pdb -p topoll.top -o nvt2.tpr -n index_lie.ndx -maxwarn 1000' >> queue2.sh")
+             os.system("echo 'gmx mdrun -v -deffnm nvt2' >> queue2.sh")
+             os.system("echo 'gmx grompp -f npt2.mdp -c nvt2.gro -p topoll.top -o npt2.tpr -n index_lie.ndx -maxwarn 1000' >> queue2.sh")
+             os.system("echo 'gmx mdrun -v -deffnm npt2' >> queue2.sh")
+             os.system("echo 'gmx grompp -f md2.mdp -c npt2.gro -p topoll.top -o md2.tpr -n index_lie.ndx -maxwarn 1000' >> queue2.sh")
+             os.system("echo 'gmx mdrun -v -deffnm md2' >> queue2.sh")
+             os.system('chmod 777 queue2.sh')
+             os.system('./queue2.sh')
+          else:
+            mbox.showerror('Error', 'ACPYPE error (Ligand). Process has been cancelled')
+            quit()
         else:
-          mbox.showerror('Error', 'ACPYPE error (Ligand). Process has been cancelled')
+          mbox.showerror('Error', 'PDB2GMX error (Receptor). Process has been cancelled')
           quit()
 
     def lie_calculation(self):
@@ -3535,30 +3984,54 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
         except:
             pass
         if gromacs_flag('mdrun'):
-          com1= '''echo 42 43 0 | g_energy -f nvt2l.edr > out1.txt'''
+          com1= '''echo 9 6 0 | g_energy -f md2.edr > out1.txt'''
         elif gromacs_flag('gmx'):
-          com1= '''echo 40 41 0 | gmx energy -f nvt2l.edr > out1.txt'''
+          com1= '''echo 50 51 0 | gmx energy -f md2.edr > out1.txt'''
         else:
           pass
         os.system(com1)
-        
-        try:
-          with open('out1.txt', 'r') as f:
-            lines = f.readlines()
-            for line in lines:
-              if re.search(r'Coul-SR:', line):
-                match0 = re.split(r'\s+', line)
+        if gromacs_flag('mdrun'):
+          try:
+            with open('out1.txt', 'r') as f:
+              lines = f.readlines()
+              for line in lines:
+                if re.search(r'Coulomb \(SR\)', line):
+                  print('Coulomb')
+                  match0 = re.split(r'\s+', line)
+                  pass
+                elif re.search(r'LJ \(SR\)', line):
+                  print('LJ')
+                  match1 = re.split(r'\s+', line)
+                  pass
+                
+          except UnboundLocalError:
+            mbox.showerror('Error', 'Please try to use other simulation type box.')
+            quit()
+        elif gromacs_flag('gmx'):
+          try:
+            with open('out1.txt', 'r') as f:
+              lines = f.readlines()
+              for line in lines:
+                if re.search(r'Coul-SR:', line):
+                  match0 = re.split(r'\s+', line)
 
-              elif re.search(r'LJ-SR:', line):
-                match1 = re.split(r'\s+', line)
-                pass
-        except UnboundLocalError:
-          mbox.showerror('Error', 'Please try to use other simulation type box (Dodecahedron).')
-          quit()
+                elif re.search(r'LJ-SR:', line):
+                  match1 = re.split(r'\s+', line)
+                  pass
+          except UnboundLocalError:
+            mbox.showerror('Error', 'Please try to use other simulation type box (Dodecahedron).')
+            quit()
+        else:
+          pass
+        if gromacs_flag('mdrun'):  
+          coul = match0[5]
+          lj = match1[5]
+        elif gromacs_flag('gmx'):
+          coul = match0[4]
+          lj = match1[4]
+        else:
+          pass
 
-
-        coul = match0[4]
-        lj = match1[4]
         if coul is not None:
           pass
         else:
@@ -3566,9 +4039,9 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
           quit()
 
         if gromacs_flag('mdrun'):
-          os.system('g_lie -f nvt.edr -o lie_lig.xvg -ligand LIG -Eqq {0} -Elj {1} >> out.txt'.format(coul,lj))
+          os.system('g_lie -f md.edr -o lie_lig.xvg -ligand LIG -Eqq {0} -Elj {1} >> out.txt'.format(coul,lj))
         elif gromacs_flag('gmx'):
-          os.system('gmx lie -f nvt.edr -o lie_lig.xvg -ligand LIG -Eqq {0} -Elj {1} >> out.txt'.format(coul,lj))
+          os.system('gmx lie -f md.edr -o lie_lig.xvg -ligand LIG -Eqq {0} -Elj {1} >> out.txt'.format(coul,lj))
         else:
           pass
         with open('out.txt', 'r') as f:
@@ -3576,6 +4049,13 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
           for line in lines:
             if re.search(r'DGbind =', line):
               match001 = re.split(r'\s+', line)
+
+        dr = str(self.save.getvalue())
+        pj = str(self.project.getvalue())
+        pj1 = pj+'_LIE'
+        lie0 = '{0}.txt'.format(pj1)
+        shutil.copy('out.txt', lie0)
+        shutil.copy2(lie0, dr)
 
         a = float(match001[2])
         y = format(a, '.2f')
@@ -3862,7 +4342,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
             plt.show()
             data0 = ('min = ' + str(min) + '\nmax = ' + str(max) + '\nmean =' + str(mean))
             text0 = """
-LiGRO v 0.5 - Output of {0}
+LiGRO v 0.6 - Output of {0}
 ---------------------------------------------
             """.format(analysis)
             try:
@@ -3990,7 +4470,7 @@ LiGRO v 0.5 - Output of {0}
             '\t\nRgymean =' + str(g3mean) + '\t\nRgzmin = ' + str(g4min) + '\t\nRgzmax = ' + str(g4max) + '\t\nRgzmean =' + str(
                 g4mean))
             text = """
-LiGRO v 0.5 - Output of {0}
+LiGRO v 0.6 - Output of {0}
 ---------------------------------------------
             """.format(analysis)
             try:
@@ -4052,7 +4532,7 @@ LiGRO v 0.5 - Output of {0}
             plt.show()
             data0 = ('min = ' + str(min) + '\nmax = ' + str(max) + '\nmean =' + str(mean))
             text0 = """
-LiGRO v 0.5 - Output of {0}
+LiGRO v 0.6 - Output of {0}
 ---------------------------------------------
             """.format(analysis)
             try:
@@ -4164,7 +4644,7 @@ LiGRO v 0.5 - Output of {0}
             try:
               with open('out.txt') as infile, tkFileDialog.asksaveasfile(mode='w', initialdir=path2, filetypes =(("Text File", "*.txt"),("All Files","*.*")),
   title = "Save LJSR-CoulSR IE txt file.", initialfile='LJSR-CoulSR_IE') as outfile:
-                  outfile.write('LiGRO v 0.5\n')
+                  outfile.write('LiGRO v 0.6\n')
                   outfile.write('Energy                      Average   Err.Est.       RMSD  Tot-Drift\n')
                   copy = False
                   for line in infile:
