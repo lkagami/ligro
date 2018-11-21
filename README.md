@@ -39,6 +39,6 @@ Av. Ipiranga, 2752 - Azenha, Porto Alegre - RS, 90610-000 - Brazil
 
 For install use Anaconda package Python 3.6:
 ```bash
-conda install -c acpype -c openbabel -c ambermd -c plip -c schrodinger -c conda-forge ligro
+conda install -c acpype ligro
 ```
     
