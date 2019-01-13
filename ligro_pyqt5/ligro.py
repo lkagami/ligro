@@ -7,6 +7,7 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QMessageBox
 import os
 import subprocess
 import sys
@@ -31,6 +32,8 @@ import zlib, base64
 sys.path[:0] = ['../../..']
 
 path2 = os.environ.get('HOME')
+
+td = str(date.today())
 
 try:
   path = tempfile.mkdtemp()
@@ -65,7 +68,7 @@ class Ui_MainWindo(object):
         self.browse_lig_mol2 = QtWidgets.QPushButton(self.groupBox_3)
         self.browse_lig_mol2.setGeometry(QtCore.QRect(550, 40, 75, 23))
         self.browse_lig_mol2.setObjectName("browse_lig_mol2")
-        self.browse_lig_mol2.clicked.connect(self.openligmol2file)
+        self.browse_lig_mol2.clicked.connect(self.openconfmol2file)
         self.sel_lig_mol2 = QtWidgets.QLineEdit(self.groupBox_3)
         self.sel_lig_mol2.setGeometry(QtCore.QRect(30, 40, 481, 21))
         self.sel_lig_mol2.setObjectName("sel_lig_mol2")
@@ -305,9 +308,11 @@ class Ui_MainWindo(object):
         self.sel_proj_name = QtWidgets.QLineEdit(self.groupBox_9)
         self.sel_proj_name.setGeometry(QtCore.QRect(90, 20, 181, 20))
         self.sel_proj_name.setObjectName("sel_proj_name")
+        self.sel_proj_name.setText('MD_'+td)
         self.sel_sav_direc = QtWidgets.QLineEdit(self.groupBox_9)
         self.sel_sav_direc.setGeometry(QtCore.QRect(370, 20, 361, 20))
         self.sel_sav_direc.setObjectName("sel_sav_direc")
+        self.sel_sav_direc.setText(path2)
         self.label_18 = QtWidgets.QLabel(self.groupBox_9)
         self.label_18.setGeometry(QtCore.QRect(290, 20, 81, 16))
         self.label_18.setObjectName("label_18")
@@ -459,8 +464,11 @@ class Ui_MainWindo(object):
         self.actionHelp_2 = QtWidgets.QAction(MainWindo)
         self.actionHelp_2.setObjectName("actionHelp_2")
         self.menuHelp.addAction(self.actionAbout)
+        self.actionAbout.triggered.connect(self.about)
         self.menuHelp.addAction(self.actionHelp_2)
+        self.actionHelp_2.triggered.connect(self.help)
         self.menu_Help.addAction(self.actionExit)
+        self.actionExit.triggered.connect(self.exit)
         self.menu_Help.addAction(self.menuHelp.menuAction())
         self.menubar.addAction(self.menu_Help.menuAction())
 
@@ -629,11 +637,19 @@ class Ui_MainWindo(object):
         
         except:
         	self.bkp_path['text'] = 'No select folder' 
+    
+    def showdialog(msgtitle,msgtxt):
+    	mb = QMessageBox()
+    	mb.setIcon(QMessageBox.Information)
+    	mb.setWindowTitle(msgtitle)
+    	mb.setText(msgtxt)
+    	mb.setStandardButtons(QMessageBox.Ok)
+    	mb.exec_()
 
     def choose_simulation_save_tpr_file(self):
 
-      dr = str(self.save.getvalue())
-      pj = str(self.project.getvalue())
+      dr = str(self.sel_sav_direc.text())
+      pj = str(self.sel_proj_name.text())
       pj1 = pj
       bk = self.bkp.getvar('var2')
       path3 = dr+'/'+pj
@@ -657,7 +673,7 @@ class Ui_MainWindo(object):
           except:
             pass
         else:
-          mbox.showinfo("INFO", "Please delete backup folder or change project name and try again")
+          showdialog("INFO", "Please delete backup folder or change project name and try again")
           pass
       elif bk == False:
         try:
@@ -670,31 +686,31 @@ class Ui_MainWindo(object):
       find3=os.path.exists('protein.pdb')
         
       if find1 == False:
-          mbox.showinfo("INFO", "Run Protein simulation")
+          showdialog("INFO", "Run Protein simulation")
           self.mount_simulation_prot()
           self.save_tprfile()
       elif find2 == False:
-          mbox.showinfo("INFO","Run Protein-Ligand simulation")
+          showdialog("INFO","Run Protein-Ligand simulation")
           self.mount_simulation_lig()
           self.save_tprfile()
           pass
       elif find3 == False:
-          mbox.showerror("Error", "PDB file not found.")
+          showdialog("Error", "PDB file not found.")
           pass
 
       elif find2 == True and find1 == False:
-          mbox.showerror("Error", "It is not possible run Protein-Cofactor")
+          showdialog("Error", "It is not possible run Protein-Cofactor")
           pass
 
       else:
-          mbox.showinfo("INFO", "Run Protein-Ligand simulation with Cofactor")
+          showdialog("INFO", "Run Protein-Ligand simulation with Cofactor")
           self.mount_simulation_cof()
           self.save_tprfile()
           pass
 
     def choose_run_simulation(self):
-      dr = str(self.save.getvalue())
-      pj = str(self.project.getvalue())
+      dr = str(self.sel_sav_direc.text())
+      pj = str(self.sel_sav_direc.text())
       pj1 = pj
       bk = self.bkp.getvar('var2')
       path3 = dr+'/'+pj
@@ -718,7 +734,7 @@ class Ui_MainWindo(object):
           except:
             pass
         else:
-          mbox.showinfo("INFO", "Please delete backup folder or change project name and try again")
+          showdialog("INFO", "Please delete backup folder or change project name and try again")
           quit()
       elif bk == False:
         try:
@@ -731,24 +747,24 @@ class Ui_MainWindo(object):
       find3=os.path.exists('protein.pdb')
 
       if find1 == False:
-          mbox.showinfo("INFO", "Run Protein simulation")
+          showdialog("INFO", "Run Protein simulation")
           self.mount_simulation_prot()
           self.run_simulation()
       elif find2 == False:
-          mbox.showinfo("INFO","Run Protein-Ligand simulation")
+          showdialog("INFO","Run Protein-Ligand simulation")
           self.mount_simulation_lig()
           self.run_simulation()
           pass
       elif find3 == False:
-          mbox.showerror("Error", "PDB file not found.")
+          showdialog("Error", "PDB file not found.")
           pass
 
       elif find2 == True and find1 == False:
-          mbox.showerror("Error", "It is not possible run Protein-Cofactor")
+          showdialog("Error", "It is not possible run Protein-Cofactor")
           pass
 
       else:
-          mbox.showinfo("INFO", "Run Protein-Ligand simulation with Cofactor")
+          showdialog("INFO", "Run Protein-Ligand simulation with Cofactor")
           self.mount_simulation_cof()
           self.run_simulation()
           pass
@@ -760,10 +776,10 @@ class Ui_MainWindo(object):
           find_tpr=os.path.exists(self.path4 + '/md.tpr')
           find_cpt=os.path.exists(self.path4 + '/md.cpt')
           if find_tpr == False:
-            mbox.showerror("Error", "TPR file not found. Please try again.")
+            showdialog("Error", "TPR file not found. Please try again.")
             pass
           elif find_cpt == False:
-            mbox.showerror("Error", "CPT file not found. Please try again.")
+            showdialog("Error", "CPT file not found. Please try again.")
             pass
           else:
             if gromacs_flag('mdrun'):
@@ -774,13 +790,13 @@ class Ui_MainWindo(object):
               os.system(cmd9)
 
         else:
-          mbox.showerror("Error", "Backup folder not found. Please try again.")
+          showdialog("Error", "Backup folder not found. Please try again.")
           pass
 
 
     def mount_simulation_lig(self):
         os.system("grep 'ATOM ' protein.pdb > protein_clean.pdb")
-        mt = str(self.metal.getcurselection())
+        mt = str(self.sel_metal.currentText())
         cmd0 = "grep {0} protein.pdb >> protein_clean.pdb".format(mt)
 
         if mt == 'None':
@@ -788,15 +804,21 @@ class Ui_MainWindo(object):
         else:
             os.system(cmd0)
 
-        ff = str(self.ff_menu.getcurselection())
-        wt = str(self.wt_menu.getcurselection())
-        ig = self.hb.getvar('var1')
+        ff = str(self.sel_ff.currentText())
+        wt = str(self.sel_water.currentText())
+
+        if self.ig_hyd.isChecked():
+            ig = '-ignh'
+        else:
+            ig = None
+
         if gromacs_flag('mdrun'):
           cmd = 'pdb2gmx -ff {0} -f protein_clean.pdb -o trp.pdb -p trp.top -water {1} {2}'.format(ff, wt, ig)
-          out_pdb2gmx = os.system(cmd)
         elif gromacs_flag('gmx'):
           cmd = 'gmx pdb2gmx -ff {0} -f protein_clean.pdb -o trp.pdb -p trp.top -water {1} {2}'.format(ff, wt, ig)
-          out_pdb2gmx = os.system(cmd)
+        else:
+            pass
+        out_pdb2gmx = os.system(cmd)
           
         if out_pdb2gmx == 0:  
           try:
@@ -812,13 +834,13 @@ class Ui_MainWindo(object):
             #Move new file
             move(abs_path, 'Ligand.mol2')
           except:
-            mbox.showerror("Error", "Mol2 file not recognized.. Please try again.")
+            showdialog("Error", "Mol2 file not recognized.. Please try again.")
             quit()
 
-          cm = str(self.cm_menu.getcurselection())
-          nc = str(self.nc.getvalue())
-          mt = str(self.mult.getvalue())
-          at = str(self.at_menu.getcurselection())
+          cm = str(self.csel_ch_met.currentText())
+          nc = str(self.sel_net_ch.text())
+          mt = str(self.sel_mult.text())
+          at = str(self.sel_at_type.currentText())
           cmdd = 'acpype -i Ligand.mol2 -c {0} -n {1} -m {2} -a {3}'.format(cm, nc, mt, at)
           acp = os.system(cmdd)
           if acp == 0:
@@ -835,8 +857,8 @@ class Ui_MainWindo(object):
 
             os.system('echo "Ligand              1" >> Complex2.top')
             os.system('mv Complex2.top trp.top')
-            bx = str(self.bx_menu.getcurselection())
-            dst = str(self.dist.getvalue())
+            bx = str(self.sel_box.currentText())
+            dst = str(self.sel_dist.text())
             if gromacs_flag('mdrun'):
               cmd1 = 'editconf -bt {0} -f complex.pdb -o trpb4solv.pdb -d {1}'.format(bx, dst)
               os.system(cmd1)
@@ -874,12 +896,12 @@ class Ui_MainWindo(object):
             elif gromacs_flag('gmx'):
               os.system('gmx grompp -f em.mdp -c trpb4ion.pdb -p trp.top -o ion.tpr -maxwarn 1000')
 
-            if self.ion_menu.getcurselection() == 'Na (Number)':
-                c_ion = '-np ' + self.ion_cc.getvalue()
-            elif self.ion_menu.getcurselection() == 'Cl (Number)':
-                c_ion = '-nn ' + self.ion_cc.getvalue()
+            if self.sel_ioniz.currentText() == 'Na (Number)':
+                c_ion = '-np ' + self.sel_conc.text()
+            elif self.sel_ioniz.currentText() == 'Cl (Number)':
+                c_ion = '-nn ' + self.sel_conc.text()
             else:
-                c_ion = '-conc ' + self.ion_cc.getvalue()
+                c_ion = '-conc ' + self.sel_conc.text()
             if gromacs_flag('mdrun'):
               cmd2 = 'echo SOL|genion -s ion.tpr -o trpb4em.pdb -neutral {} -p trp.top'.format(c_ion)              
             elif gromacs_flag('gmx'):
@@ -887,9 +909,9 @@ class Ui_MainWindo(object):
               
             os.system(cmd2)
 
-            inte = self.min_menu.getcurselection()
+            inte = self.sel_min_alg.currentText()
 
-            nst = self.step.getvalue()
+            nst = self.sel_min_step.text()
 
             if gromacs_flag('mdrun'):
               cmd3 = '''
@@ -1093,11 +1115,11 @@ class Ui_MainWindo(object):
               else:
                 pass
 
-            stnvt = str(self.time_nvt.getvalue())
-            stnpt = str(self.time_npt.getvalue())
-            stmd = str(self.time_md.getvalue())
-            temp = str(self.temperature.getvalue())
-            t_st = str(self.time_st.getvalue())
+            stnvt = str(self.sel_nvt_step.text())
+            stnpt = str(self.sel_npt_step.text())
+            stmd = str(self.sel_md_step.text())
+            temp = str(self.sel_temp.text())
+            t_st = str(self.sel_int_step.text())
 
             if gromacs_flag('mdrun'):
               cmd5 = '''
@@ -1421,12 +1443,13 @@ class Ui_MainWindo(object):
 
             os.system(cmd8)
 
-            if mbox.askyesno('View Complex', 'Is complex OK??'):
+            reply = QMessageBox.question(None, 'View Complex','Is complex OK?', QMessageBox.Yes, QMessageBox.No)
+            if reply == QMessageBox.Yes:
                 pass
             else:
-                mbox.showinfo('No', 'Process has been cancelled')
+                showdialog('No', 'Process has been cancelled')
                 quit()
-
+            
             if gromacs_flag('mdrun'):
               os.system('echo 2|genrestr -f Ligand.acpype/Ligand_GMX.gro -o posre_LIG.itp -fc 1000 1000 1000')
               os.system(r'''
@@ -1457,15 +1480,15 @@ class Ui_MainWindo(object):
               os.system("echo 'gmx mdrun -v -deffnm npt' >> queue.sh")
               os.system("echo 'gmx grompp -f md.mdp -c npt.gro -p trp.top -o md.tpr -r npt.gro -maxwarn 1000' >> queue.sh")
           else:
-            mbox.showerror('Error', 'ACPYPE error (Ligand). Process has been cancelled')
+            showdialog('Error', 'ACPYPE error (Ligand). Process has been cancelled')
             quit()
         else:
-          mbox.showerror('Error', 'PDB2GMX error (Receptor). Process has been cancelled')
+          showdialog('Error', 'PDB2GMX error (Receptor). Process has been cancelled')
           quit()
 
     def mount_simulation_cof(self):
         os.system("grep 'ATOM ' protein.pdb > protein_clean.pdb")
-        mt = str(self.metal.getcurselection())
+        mt = str(self.sel_metal.currentText())
         cmd0 = "grep {0} protein.pdb >> protein_clean.pdb".format(mt)
 
         if mt == 'None':
@@ -1473,9 +1496,14 @@ class Ui_MainWindo(object):
         else:
             os.system(cmd0)
 
-        ff = str(self.ff_menu.getcurselection())
-        wt = str(self.wt_menu.getcurselection())
-        ig = self.hb.getvar('var1')
+        ff = str(self.sel_ff.currentText())
+        wt = str(self.sel_water.currentText())
+
+        if self.ig_hyd.isChecked():
+            ig = '-ignh'
+        else:
+            ig = None
+
         if gromacs_flag('mdrun'):
           cmd = 'pdb2gmx -ff {0} -f protein_clean.pdb -o trp.pdb -p trp.top -water {1} {2}'.format(ff, wt, ig)
         elif gromacs_flag('gmx'):
@@ -1497,7 +1525,7 @@ class Ui_MainWindo(object):
             #Move new file
             move(abs_path, 'Ligand.mol2')
           except:
-            mbox.showerror("Error", "Mol2 (ligand) file not recognized.. Please try again.")
+            showdialog("Error", "Mol2 (ligand) file not recognized.. Please try again.")
             quit()
 
           
@@ -1514,13 +1542,13 @@ class Ui_MainWindo(object):
             #Move new file
             move(abs_path, 'Cofactor.mol2')
           except:
-            mbox.showerror("Error", "Mol2 (cofactor) file not recognized.. Please try again.")
+            showdialog("Error", "Mol2 (cofactor) file not recognized.. Please try again.")
             quit()  
           
-          cm = str(self.cm_menu.getcurselection())
-          nc = str(self.nc.getvalue())
-          mt = str(self.mult.getvalue())
-          at = str(self.at_menu.getcurselection())
+          cm = str(self.csel_ch_met.currentText())
+          nc = str(self.sel_net_ch.text())
+          mt = str(self.sel_mult.text())
+          at = str(self.sel_at_type.currentText())
           cmdd0 = 'acpype -i Ligand.mol2 -c {0} -n {1} -m {2} -a {3}'.format(cm, nc, mt, at)
           cmdd = 'acpype -i Cofactor.mol2 -c {0} -n {1} -m {2} -a {3}'.format(cm, nc, mt, at)
           acp0 = os.system(cmdd0)
@@ -1598,8 +1626,8 @@ class Ui_MainWindo(object):
               os.system('echo "Cofactor            1" >> Complex4.top')
               os.system('mv Complex4.top trp.top')
 
-              bx = str(self.bx_menu.getcurselection())
-              dst = str(self.dist.getvalue())
+              bx = str(self.sel_box.currentText())
+              dst = str(self.sel_dist.text())
 
               if gromacs_flag('mdrun'):
                 cmd1 = 'editconf -bt {0} -f complex2.pdb -o trpb4solv.pdb -d {1}'.format(bx, dst)
@@ -1639,18 +1667,22 @@ class Ui_MainWindo(object):
                           ''')
               os.system('gmx grompp -f em.mdp -c trpb4ion.pdb -p trp.top -o ion.tpr -maxwarn 1000')
 
-              if self.ion_menu.getcurselection() == 'Na (Number)':
-                  c_ion = '-np ' + self.ion_cc.getvalue()
-              elif self.ion_menu.getcurselection() == 'Cl (Number)':
-                  c_ion = '-nn ' + self.ion_cc.getvalue()
+              if self.sel_ioniz.currentText() == 'Na (Number)':
+                c_ion = '-np ' + self.sel_conc.text()
+              elif self.sel_ioniz.currentText() == 'Cl (Number)':
+                c_ion = '-nn ' + self.sel_conc.text()
               else:
-                  c_ion = '-conc ' + self.ion_cc.getvalue()
-              cmd2 = 'echo SOL|gmx genion -s ion.tpr -o trpb4em.pdb -neutral {} -p trp.top'.format(c_ion)
+                c_ion = '-conc ' + self.sel_conc.text()
+
+              if gromacs_flag('mdrun'):
+                cmd2 = 'echo SOL|genion -s ion.tpr -o trpb4em.pdb -neutral {} -p trp.top'.format(c_ion)
+              elif gromacs_flag('gmx'):
+                cmd2 = 'echo SOL|gmx genion -s ion.tpr -o trpb4em.pdb -neutral {} -p trp.top'.format(c_ion)
+
               os.system(cmd2)
 
-              inte = self.min_menu.getcurselection()
-
-              nst = self.step.getvalue()
+              inte = self.sel_min_alg.currentText()
+              nst = self.sel_min_step.text()
 
               if gromacs_flag('mdrun'):
                 cmd3 = '''
@@ -1855,11 +1887,11 @@ class Ui_MainWindo(object):
                       pass
 
 
-              stnvt = str(self.time_nvt.getvalue())
-              stnpt = str(self.time_npt.getvalue())
-              stmd = str(self.time_md.getvalue())
-              temp = str(self.temperature.getvalue())
-              t_st = str(self.time_st.getvalue())
+              stnvt = str(self.sel_nvt_step.text())
+              stnpt = str(self.sel_npt_step.text())
+              stmd = str(self.sel_md_step.text())
+              temp = str(self.sel_temp.text())
+              t_st = str(self.sel_int_step.text())
 
               if gromacs_flag('mdrun'):
                 cmd5 = '''
@@ -2179,11 +2211,13 @@ class Ui_MainWindo(object):
 
               os.system(cmd8)
 
-              if mbox.askyesno('View Complex', 'Is complex OK??'):
-                  pass
+              reply = QMessageBox.question(None, 'View Complex','Is complex OK?', QMessageBox.Yes, QMessageBox.No)
+              if reply == QMessageBox.Yes:
+                pass
               else:
-                  mbox.showinfo('No', 'Process has been cancelled')
-                  quit()
+                showdialog('No', 'Process has been cancelled')
+                quit()
+
               if gromacs_flag('mdrun'):
                 os.system('echo 2|genrestr -f Ligand.acpype/Ligand_GMX.gro -o posre_LIG.itp -fc 1000 1000 1000')
                 os.system(r'''
@@ -2217,20 +2251,20 @@ class Ui_MainWindo(object):
                 pass
 
             else:
-              mbox.showerror('Error', 'ACPYPE error in Cofactor. Process has been cancelled')
+              showdialog('Error', 'ACPYPE error in Cofactor. Process has been cancelled')
               quit()
           
           else:
-            mbox.showerror('Error', 'ACPYPE error in Ligand. Process has been cancelled')
+            showdialog('Error', 'ACPYPE error in Ligand. Process has been cancelled')
             quit()
         
         else:
-          mbox.showerror('Error', 'PDB2GMX error (Receptor). Process has been cancelled')
+          showdialog('Error', 'PDB2GMX error (Receptor). Process has been cancelled')
           quit()
 
     def mount_simulation_prot(self):
         os.system("grep 'ATOM ' protein.pdb > protein_clean.pdb")
-        mt = str(self.metal.getcurselection())
+        mt = str(self.sel_metal.currentText())
         cmd0 = "grep {0} protein.pdb >> protein_clean.pdb".format(mt)
 
         if mt == 'None':
@@ -2238,19 +2272,26 @@ class Ui_MainWindo(object):
         else:
             os.system(cmd0)
 
-        ff = str(self.ff_menu.getcurselection())
-        wt = str(self.wt_menu.getcurselection())
-        ig = self.hb.getvar('var1')
+        ff = str(self.sel_ff.currentText())
+        wt = str(self.sel_water.currentText())
+
+        if self.ig_hyd.isChecked():
+            ig = '-ignh'
+        else:
+            ig = None
+
         if gromacs_flag('mdrun'):
           cmd = 'pdb2gmx -ff {0} -f protein_clean.pdb -o trp.pdb -p trp.top -water {1} {2}'.format(ff, wt, ig)
         elif gromacs_flag('gmx'):
           cmd = 'gmx pdb2gmx -ff {0} -f protein_clean.pdb -o trp.pdb -p trp.top -water {1} {2}'.format(ff, wt, ig)  
         else:
           pass
+
         out_pdb2gmx = os.system(cmd)
+
         if out_pdb2gmx == 0:
-          bx = str(self.bx_menu.getcurselection())
-          dst = str(self.dist.getvalue())
+          bx = str(self.bx_menu.currentText())
+          dst = str(self.dist.text())
           if gromacs_flag('mdrun'):
             cmd1 = 'editconf -bt {0} -f trp.pdb -o trpb4solv.pdb -d {1}'.format(bx, dst)
           elif gromacs_flag('gmx'):
@@ -2292,12 +2333,12 @@ class Ui_MainWindo(object):
             os.system('gmx grompp -f em.mdp -c trpb4ion.pdb -p trp.top -o ion.tpr -maxwarn 1000') 
           else:
             pass
-          if self.ion_menu.getcurselection() == 'Na (Number)':
-              c_ion = '-np ' + self.ion_cc.getvalue()
-          elif self.ion_menu.getcurselection() == 'Cl (Number)':
-              c_ion = '-nn ' + self.ion_cc.getvalue()
+          if self.sel_ioniz.currentText() == 'Na (Number)':
+                c_ion = '-np ' + self.sel_conc.text()
+          elif self.sel_ioniz.currentText() == 'Cl (Number)':
+                c_ion = '-nn ' + self.sel_conc.text()
           else:
-              c_ion = '-conc ' + self.ion_cc.getvalue()
+                c_ion = '-conc ' + self.sel_conc.text()
 
           if gromacs_flag('mdrun'):
             cmd2 = 'echo SOL|genion -s ion.tpr -o trpb4em.pdb -neutral {} -p trp.top'.format(c_ion)
@@ -2305,11 +2346,11 @@ class Ui_MainWindo(object):
             cmd2 = 'echo SOL|gmx genion -s ion.tpr -o trpb4em.pdb -neutral {} -p trp.top'.format(c_ion)
           else:
             pass
+
           os.system(cmd2)
 
-          inte = self.min_menu.getcurselection()
-
-          nst = self.step.getvalue()
+          inte = self.sel_min_alg.currentText()
+          nst = self.sel_min_step.text()
 
           if gromacs_flag('mdrun'):
             cmd3 = '''
@@ -2488,11 +2529,11 @@ class Ui_MainWindo(object):
           else:
             pass
 
-          stnvt = str(self.time_nvt.getvalue())
-          stnpt = str(self.time_npt.getvalue())
-          stmd = str(self.time_md.getvalue())
-          temp = str(self.temperature.getvalue())
-          t_st = str(self.time_st.getvalue())
+          stnvt = str(self.sel_nvt_step.text())
+          stnpt = str(self.sel_npt_step.text())
+          stmd = str(self.sel_md_step.text())
+          temp = str(self.sel_temp.text())
+          t_st = str(self.sel_int_step.text())
 
           if gromacs_flag('mdrun'):
             cmd5 = '''
@@ -2818,11 +2859,12 @@ class Ui_MainWindo(object):
 
           os.system(cmd8)
 
-          if mbox.askyesno('View Complex', 'Is protein OK??'):
-              pass
+          reply = QMessageBox.question(None, 'View Complex','Is complex OK?', QMessageBox.Yes, QMessageBox.No)
+          if reply == QMessageBox.Yes:
+            pass
           else:
-              mbox.showinfo('No', 'Process has been cancelled')
-              quit()
+            showdialog('No', 'Process has been cancelled')
+            quit()
 
           os.system('cat << EOF > | queue.sh')
 
@@ -2842,7 +2884,7 @@ class Ui_MainWindo(object):
           else:
             pass
         else:
-          mbox.showerror('Error', 'PDB2GMX error (Receptor). Process has been cancelled')
+          showdialog('Error', 'PDB2GMX error (Receptor). Process has been cancelled')
           quit()
 
     def mount_simulation_LIE_complex(self):
@@ -2854,26 +2896,26 @@ class Ui_MainWindo(object):
         find2=os.path.exists('Cofactor.mol2')
         find3=os.path.exists('protein.pdb')
         if find1 == False:
-            mbox.showerror("INFO","Ligand not found")
+            showdialog("INFO","Ligand not found")
             quit()
         elif find2 == False:
-            mbox.showinfo("INFO","Run LIE calculation")
+            showdialog("INFO","Run LIE calculation")
             self.simulation_LIE_complex()
             self.simulation_LIE_lig()
             self.lie_calculation()
-            mbox.showinfo("INFO","LIE calculation is finished")
+            showdialog("INFO","LIE calculation is finished")
 
         elif find3 == False:
-            mbox.showerror("Error", "PDB file not found.")
+            showdialog("Error", "PDB file not found.")
             pass
 
         else:
-            mbox.showerror("Error", "LIE calculation can not be performed with Cofactor.")
+            showdialog("Error", "LIE calculation can not be performed with Cofactor.")
             quit()
 
     def simulation_LIE_complex(self):
         os.system("grep 'ATOM ' protein.pdb > protein_clean.pdb")
-        mt = str(self.metal.getcurselection())
+        mt = str(self.sel_metal.currentText())
         cmd0 = "grep {0} protein.pdb >> protein_clean.pdb".format(mt)
 
         if mt == 'None':
@@ -2881,9 +2923,14 @@ class Ui_MainWindo(object):
         else:
             os.system(cmd0)
 
-        ff = str(self.ff_menu.getcurselection())
-        wt = str(self.wt_menu.getcurselection())
-        ig = self.hb.getvar('var1')
+        ff = str(self.sel_ff.currentText())
+        wt = str(self.sel_water.currentText())
+
+        if self.ig_hyd.isChecked():
+            ig = '-ignh'
+        else:
+            ig = None
+
         if gromacs_flag('mdrun'):
           cmd = 'pdb2gmx -ff {0} -f protein_clean.pdb -o trp.pdb -p trp.top -water {1} {2}'.format(ff, wt, ig)
           out_pdb2gmx = os.system(cmd)
@@ -2905,13 +2952,13 @@ class Ui_MainWindo(object):
             #Move new file
             move(abs_path, 'Ligand.mol2')
           except:
-            mbox.showerror("Error", "Mol2 file not recognized.. Please try again.")
+            showdialog("Error", "Mol2 file not recognized.. Please try again.")
             quit()
 
-          cm = str(self.cm_menu.getcurselection())
-          nc = str(self.nc.getvalue())
-          mt = str(self.mult.getvalue())
-          at = str(self.at_menu.getcurselection())
+          cm = str(self.csel_ch_met.currentText())
+          nc = str(self.sel_net_ch.text())
+          mt = str(self.sel_mult.text())
+          at = str(self.sel_at_type.currentText())
           cmdd = 'acpype -i Ligand.mol2 -c {0} -n {1} -m {2} -a {3}'.format(cm, nc, mt, at)
           acp = os.system(cmdd)
           if acp == 0:
@@ -2928,8 +2975,8 @@ class Ui_MainWindo(object):
 
             os.system('echo "Ligand              1" >> Complex2.top')
             os.system('mv Complex2.top trp.top')
-            bx = str(self.bx_menu.getcurselection())
-            dst = str(self.dist.getvalue())
+            bx = str(self.sel_box.currentText())
+            dst = str(self.sel_dist.text())
             if gromacs_flag('mdrun'):
               cmd1 = 'editconf -bt {0} -f complex.pdb -o trpb4solv.pdb -d {1}'.format(bx, dst)
               os.system(cmd1)
@@ -2967,12 +3014,12 @@ class Ui_MainWindo(object):
             elif gromacs_flag('gmx'):
               os.system('gmx grompp -f em.mdp -c trpb4ion.pdb -p trp.top -o ion.tpr -maxwarn 1000')
 
-            if self.ion_menu.getcurselection() == 'Na (Number)':
-                c_ion = '-np ' + self.ion_cc.getvalue()
-            elif self.ion_menu.getcurselection() == 'Cl (Number)':
-                c_ion = '-nn ' + self.ion_cc.getvalue()
+            if self.sel_ioniz.currentText() == 'Na (Number)':
+                c_ion = '-np ' + self.sel_conc.text()
+            elif self.sel_ioniz.currentText() == 'Cl (Number)':
+                c_ion = '-nn ' + self.sel_conc.text()
             else:
-                c_ion = '-conc ' + self.ion_cc.getvalue()
+                c_ion = '-conc ' + self.sel_conc.text()
             if gromacs_flag('mdrun'):
               cmd2 = 'echo SOL|genion -s ion.tpr -o trpb4em.pdb -neutral {} -p trp.top'.format(c_ion)
               
@@ -2981,9 +3028,9 @@ class Ui_MainWindo(object):
               
             os.system(cmd2)
 
-            inte = self.min_menu.getcurselection()
+            inte = self.sel_min_alg.currentText()
 
-            nst = self.step.getvalue()
+            nst = self.sel_min_step.text()
 
             if gromacs_flag('mdrun'):
               cmd3 = '''
@@ -3187,11 +3234,11 @@ class Ui_MainWindo(object):
               else:
                 pass
 
-            stnvt = str(self.time_nvt.getvalue())
-            stnpt = str(self.time_npt.getvalue())
-            stmd = str(self.time_md.getvalue())
-            temp = str(self.temperature.getvalue())
-            t_st = str(self.time_st.getvalue())
+            stnvt = str(self.sel_nvt_step.text())
+            stnpt = str(self.sel_npt_step.text())
+            stmd = str(self.sel_md_step.text())
+            temp = str(self.sel_temp.text())
+            t_st = str(self.sel_int_step.text())
 
             if gromacs_flag('mdrun'):
               cmd5 = '''
@@ -3511,10 +3558,11 @@ class Ui_MainWindo(object):
 
             os.system(cmd8)
 
-            if mbox.askyesno('View Complex', 'Is complex OK??'):
+            reply = QMessageBox.question(None, 'View Complex','Is complex OK?', QMessageBox.Yes, QMessageBox.No)
+            if reply == QMessageBox.Yes:
                 pass
             else:
-                mbox.showinfo('No', 'Process has been cancelled')
+                showdialog('No', 'Process has been cancelled')
                 quit()
 
             if gromacs_flag('mdrun'):
@@ -3553,10 +3601,10 @@ class Ui_MainWindo(object):
               os.system('chmod 777 queue.sh')
               os.system('./queue.sh')
           else:
-            mbox.showerror('Error', 'ACPYPE error (Ligand). Process has been cancelled')
+            showdialog('Error', 'ACPYPE error (Ligand). Process has been cancelled')
             quit()
         else:
-          mbox.showerror('Error', 'PDB2GMX error (Receptor). Process has been cancelled')
+          showdialog('Error', 'PDB2GMX error (Receptor). Process has been cancelled')
           quit()
 
     def simulation_LIE_lig(self):
@@ -3577,20 +3625,20 @@ class Ui_MainWindo(object):
           #Move new file
           move(abs_path, 'Ligand.mol2')
         except:
-          mbox.showerror("Error", "Mol2 file not recognized.. Please try again.")
+          showdialog("Error", "Mol2 file not recognized.. Please try again.")
           quit()
         
-        cm = str(self.cm_menu.getcurselection())
-        nc = str(self.nc.getvalue())
-        mt = str(self.mult.getvalue())
-        at = str(self.at_menu.getcurselection())
+        cm = str(self.csel_ch_met.currentText())
+        nc = str(self.sel_net_ch.text())
+        mt = str(self.sel_mult.text())
+        at = str(self.sel_at_type.currentText())
         cmdd = 'acpype -i Ligand.mol2 -c {0} -n {1} -m {2} -a {3}'.format(cm, nc, mt, at)
         acp3 = os.system(cmdd)
         if acp3 == 0:
           os.system('cp Ligand.acpype/Ligand_GMX.gro Ligand.gro')
 
-          ff = str(self.ff_menu.getcurselection())
-          wt = str(self.wt_menu.getcurselection())
+          ff = str(self.sel_ff.currentText())
+          wt = str(self.sel_water.currentText())
 
           if ff != 'oplsaa':
               os.system('cp Ligand.acpype/Ligand_GMX.itp Ligand.itp')
@@ -3615,8 +3663,8 @@ class Ui_MainWindo(object):
 
           os.system(liecmd5)
 
-          bx = str(self.bx_menu.getcurselection())
-          dst = str(self.dist.getvalue())
+          bx = str(self.sel_box.currentText())
+          dst = str(self.sel_dist.text())
           
           if gromacs_flag('mdrun'):
             liecmd1 = 'editconf -bt {0} -f Ligand.gro -o trpb4solvl.pdb -d {1}'.format(bx, dst)
@@ -3657,12 +3705,13 @@ class Ui_MainWindo(object):
             os.system('gmx grompp -f em.mdp -c trpb4ionl.pdb -p topoll.top -o ionl.tpr -maxwarn 1000')
           else:
             pass  
-          if self.ion_menu.getcurselection() == 'Na (Number)':
-              c_ion = '-np ' + self.ion_cc.getvalue()
-          elif self.ion_menu.getcurselection() == 'Cl (Number)':
-              c_ion = '-nn ' + self.ion_cc.getvalue()
+          if self.sel_ioniz.currentText()  == 'Na (Number)':
+              c_ion = '-np ' + self.sel_conc.text()
+          elif self.sel_ioniz.currentText()  == 'Cl (Number)':
+              c_ion = '-nn ' + self.sel_conc.text()
           else:
-              c_ion = '-conc ' + self.ion_cc.getvalue()
+              c_ion = '-conc ' + self.sel_conc.text()
+
           if gromacs_flag('mdrun'):
             liecmd2 = 'echo SOL|genion -s ionl.tpr -o trpb4eml.pdb -neutral {} -p topoll.top'.format(c_ion)
           elif gromacs_flag('gmx'):
@@ -3671,9 +3720,9 @@ class Ui_MainWindo(object):
             pass  
           os.system(liecmd2)
 
-          lie_inte = self.min_menu.getcurselection()
+          lie_inte = self.sel_min_alg.currentText()
 
-          lie_nst = self.step.getvalue()
+          lie_nst = self.sel_min_step.text()
 
           
           if gromacs_flag('mdrun'):
@@ -3858,11 +3907,11 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
                             EOF ''')
 
 
-          stnvt = str(self.time_nvt.getvalue())
-          stnpt = str(self.time_npt.getvalue())
-          stmd = str(self.time_md.getvalue())
-          temp = str(self.temperature.getvalue())
-          t_st = str(self.time_st.getvalue())
+          stnvt = str(self.sel_nvt_step.text())
+          stnpt = str(self.sel_npt_step.text())
+          stmd = str(self.sel_md_step.text())
+          temp = str(self.sel_temp.text())
+          t_st = str(self.sel_int_step.text())
 
           
           if gromacs_flag('mdrun'):
@@ -4188,11 +4237,12 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
 
           os.system(cmd8)
 
-          if mbox.askyesno('View Ligand', 'Is solvated ligand OK??'):
+          reply = QMessageBox.question(None, 'View Complex','Is complex OK?', QMessageBox.Yes, QMessageBox.No)
+          if reply == QMessageBox.Yes:
             pass
           else:
-               mbox.showinfo('No', 'Process has been cancelled')
-               quit()
+            showdialog('No', 'Process has been cancelled')
+            quit()
 
           if gromacs_flag('mdrun'):
              os.system('cat << EOF > | queue2.sh')
@@ -4216,10 +4266,10 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
              os.system('chmod 777 queue2.sh')
              os.system('./queue2.sh')
           else:
-            mbox.showerror('Error', 'ACPYPE error (Ligand). Process has been cancelled')
+            showdialog('Error', 'ACPYPE error (Ligand). Process has been cancelled')
             quit()
         else:
-          mbox.showerror('Error', 'PDB2GMX error (Receptor). Process has been cancelled')
+          showdialog('Error', 'PDB2GMX error (Receptor). Process has been cancelled')
           quit()
 
     def lie_calculation(self):
@@ -4249,7 +4299,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
                   pass
                 
           except UnboundLocalError:
-            mbox.showerror('Error', 'Please try to use other simulation type box.')
+            showdialog('Error', 'Please try to use other simulation type box.')
             quit()
         elif gromacs_flag('gmx'):
           try:
@@ -4263,7 +4313,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
                   match1 = re.split(r'\s+', line)
                   pass
           except UnboundLocalError:
-            mbox.showerror('Error', 'Please try to use other simulation type box (Dodecahedron).')
+            showdialog('Error', 'Please try to use other simulation type box (Dodecahedron).')
             quit()
         else:
           pass
@@ -4279,7 +4329,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
         if coul is not None:
           pass
         else:
-          mbox.showerror('Error', 'Please try to use other simulation type box (Dodecahedron).')
+          showdialog('Error', 'Please try to use other simulation type box (Dodecahedron).')
           quit()
 
         if gromacs_flag('mdrun'):
@@ -4294,8 +4344,8 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
             if re.search(r'DGbind =', line):
               match001 = re.split(r'\s+', line)
 
-        dr = str(self.save.getvalue())
-        pj = str(self.project.getvalue())
+        dr = str(self.sel_sav_direc.text())
+        pj = str(self.sel_proj_name.text())
         pj1 = pj+'_LIE'
         lie0 = '{0}.txt'.format(pj1)
         shutil.copy('out.txt', lie0)
@@ -4303,19 +4353,19 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
 
         a = float(match001[2])
         y = format(a, '.2f')
-        self.lie_ener['text'] = str(y)
+        self.lie_val.setText(str(y))
 
 
     def save_tprfile(self):
         os.system('chmod 777 queue.sh')
         os.system('./queue.sh')
-        dr = str(self.save.getvalue())
-        pj = str(self.project.getvalue())
+        dr = str(self.sel_sav_direc.text())
+        pj = str(self.sel_proj_name.text())
         pj1 = pj
         md0 = '{0}.tpr'.format(pj1)
         shutil.copy('md.tpr', md0)
         shutil.copy2(md0, dr)
-        mbox.showinfo('Finish', 'Job has finished')
+        showdialog('Finish', 'Job has finished')
         return None
 
     def run_simulation(self):
@@ -4329,7 +4379,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
         pass
       os.system('chmod 777 queue.sh')
       os.system('./queue.sh')
-      pj = str(self.project.getvalue())
+      pj = str(self.sel_proj_name.text())
       
       md1 = '{0}.xtc'.format(pj)
       md2 = '{0}.edr'.format(pj)
@@ -4475,7 +4525,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
       shutil.copy('md.edr', md2)
       shutil.copy('md.gro', md3)
       shutil.copy('md.tpr', md4)
-      dr = str(self.save.getvalue())
+      dr = str(self.save.text())
       results_path = dr + '/'+ pj + '_results'
       if not os.path.exists(results_path):
         os.makedirs(results_path)
@@ -4486,51 +4536,44 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
         shutil.copy2(md2, results_path)
         shutil.copy2(md3, results_path)
         shutil.copy2(md4, results_path)
-        mbox.showinfo('Finish', 'Job has finished')
+        showdialog('Finish', 'Job has finished')
         pass
       except:
-        mbox.showerror("Error", " It is not possible copy MD files.")
+        showdialog("Error", " It is not possible copy MD files.")
         quit()
 
     def opentprfile(self):
         try:
-            self.tprfile = tkFileDialog.askopenfilename(initialdir=path2, title="Select TPR file",
-                                                        filetypes=(("TPR files", "*.tpr"), ("all files", "*.*")))
-            self.tpr1['text'] = self.tprfile
-            shutil.copy(self.tprfile, path+'/md_an.tpr')
+            tpr_dialog = QtWidgets.QFileDialog()
+            tpr_file = tpr_dialog.getOpenFileName(None, "Select TPR file", path2, "TPR files (*.tpr)")
+            shutil.copy(tpr_file[0], path+'/md_an.tpr')
+            self.sel_tpr.setText(tpr_file[0])
         except:
-            self.tpr1['text'] = 'No select file'
+            self.sel_tpr.setText('No select file')
 
     def openedrfile(self):
         try:
-            self.edrfile = tkFileDialog.askopenfilename(initialdir=path2, title="Select EDR file",
-                                                        filetypes=(("EDR files", "*.edr"), ("all files", "*.*")))
-            self.edr1['text'] = self.edrfile
-            shutil.copy(self.edrfile, path+'/md_an.edr')
+            edr_dialog = QtWidgets.QFileDialog()
+            edr_file = edr_dialog.getOpenFileName(None, "Select EDR file", path2, "EDR files (*.pdb)")
+            shutil.copy(edr_file[0], path+'/md_an.edr')
+            self.sel_edr.setText(edr_file[0])
         except:
-            self.edr1['text'] = 'No select file'
-            #
+            self.sel_edr.setText('No select file')
 
     def openxtcfile(self):
-      
-      try:
-          self.xtcfile = tkFileDialog.askopenfilename(initialdir=path2, title="Select XTC file",
-                                                         filetypes=(("XTC files", "*.xtc"), ("all files", "*.*")))
-          print('Please wait load file process is finished...')
-          
-          self.xtc['text'] = self.xtcfile
-          
-          shutil.copy(self.xtcfile, path+'/md_an.xtc')
-          print('OK')
-                    
-      except:
-          self.xtc['text'] = 'No select file'
+        try:
+            xtc_dialog = QtWidgets.QFileDialog()
+            xtc_file = xtc_dialog.getOpenFileName(None, "Select PDB file", path2, "PDB files (*.pdb)")
+            shutil.copy(xtc_file[0], path+'/md_an.xtc')
+            self.sel_xtc.setText(xtc_file[0])
+        except:
+            self.sel_xtc.setText('No select file')
 
             #
     def RMSD(self):
         
-        struct = str(self.structure_menu.getcurselection())
-        analysis=str(self.analysis_menu.getcurselection())
+        struct = str(self.sel_struc.currentText())
+        analysis=str(self.sel_analy.currentText())
 
 
         if analysis == 'RMSD':
@@ -4541,10 +4584,10 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
             find1=os.path.exists('md_an.tpr')
             find2=os.path.exists('md_an.xtc')
             if find1 == False:
-                mbox.showerror("Error", "TPR file not found.")
+                showdialog("Error", "TPR file not found.")
                 quit()
             elif find2 == False:
-                mbox.showerror("Error", "XTC file not found.")
+                showdialog("Error", "XTC file not found.")
                 quit()
             else:
                 pass
@@ -4563,10 +4606,10 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
             else:
               pass                        
             os.system(command)
-            pj = str(self.project.getvalue())
+            pj = str(self.sel_proj_name.text())
             an1 = 'rmsd_{0}.xvg'.format(pj)
             shutil.copy('rmsd.xvg', an1)
-            directory = str(self.save.getvalue())
+            directory = str(self.sel_sav_direc.text())
             shutil.copy2(an1, directory)
             t, rmsd = np.loadtxt("rmsd.xvg", unpack=True)
             fig = plt.figure(figsize=(10, 5))
@@ -4586,13 +4629,12 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
             plt.show()
             data0 = ('min = ' + str(min) + '\nmax = ' + str(max) + '\nmean =' + str(mean))
             text0 = """
-LiGRO v 0.6 - Output of {0}
+LiGRO v 1.0 - Output of {0}
 ---------------------------------------------
             """.format(analysis)
             try:
               with open('rmsd_out.txt', 'w') as rmsd_infile:
-                rmsd_out = tkFileDialog.asksaveasfile(mode='w', initialdir=path2, filetypes =(("Text File", "*.txt"),("All Files","*.*")),
-    title = "Save RMSD statistic file.", initialfile='ligro_RMSD')
+                rmsd_out, _ = QFileDialog.getSaveFileName(self,"Save RMSD statistic file", os.path.join(path2+'ligro_rmsd_out.txt'), 'Text file(*.txt)')
                 rmsd_out.write(text0+data0)
                 rmsd_out.close()
                 pass
@@ -4607,10 +4649,10 @@ LiGRO v 0.6 - Output of {0}
             find1=os.path.exists('md_an.tpr')
             find2=os.path.exists('md_an.xtc')
             if find1 == False:
-                mbox.showerror("Error", "TPR file not found.")
+                showdialog("Error", "TPR file not found.")
                 pass
             elif find2 == False:
-                mbox.showerror("Error", "XTC file not found.")
+                showdialog("Error", "XTC file not found.")
                 pass
             else:
                 pass
@@ -4625,10 +4667,10 @@ LiGRO v 0.6 - Output of {0}
             else:
               pass
             os.system(command1)
-            pj = str(self.project.getvalue())
+            pj = str(self.project.text())
             an2 = 'rmsf_{0}.xvg'.format(pj)
             shutil.copy('rmsf.xvg', an2)
-            directory = str(self.save.getvalue())
+            directory = str(self.save.text())
             shutil.copy2(an2, directory)
             t, rmsf = np.loadtxt("rmsf.xvg", unpack=True)
             fig = plt.figure(figsize=(10, 5))
@@ -4651,10 +4693,10 @@ LiGRO v 0.6 - Output of {0}
             find1=os.path.exists('md_an.tpr')
             find2=os.path.exists('md_an.xtc')
             if find1 == False:
-                mbox.showerror("Error", "TPR file not found.")
+                showdialog("Error", "TPR file not found.")
                 pass
             elif find2 == False:
-                mbox.showerror("Error", "XTC file not found.")
+                showdialog("Error", "XTC file not found.")
                 pass
             else:
                 pass
@@ -4669,10 +4711,10 @@ LiGRO v 0.6 - Output of {0}
             else:
               pass
             os.system(command2)
-            pj = str(self.project.getvalue())
+            pj = str(self.project.text())
             an3 = 'rg_{0}.xvg'.format(pj)
             shutil.copy('gyrate.xvg', an3)
-            directory = str(self.save.getvalue())
+            directory = str(self.save.text())
             shutil.copy2(an3, directory)
             data = np.loadtxt('gyrate.xvg')
             fig = plt.figure(figsize=(10, 5))
@@ -4714,13 +4756,12 @@ LiGRO v 0.6 - Output of {0}
             '\t\nRgymean =' + str(g3mean) + '\t\nRgzmin = ' + str(g4min) + '\t\nRgzmax = ' + str(g4max) + '\t\nRgzmean =' + str(
                 g4mean))
             text = """
-LiGRO v 0.6 - Output of {0}
+LiGRO v 1.0 - Output of {0}
 ---------------------------------------------
             """.format(analysis)
             try:
               with open('rg_out.txt', 'w') as rg_infile:
-                rg_out = tkFileDialog.asksaveasfile(mode='w', initialdir=path2, filetypes =(("Text File", "*.txt"),("All Files","*.*")),
-    title = "Save RG statistic file.", initialfile='ligro_RG')
+                rg_out, _ = QFileDialog.getSaveFileName(self,"Save RG statistic file", os.path.join(path2+'ligro_rg_out.txt'), 'Text file(*.txt)')
                 rg_out.write(text+data1)
                 rg_out.close()
                 pass
@@ -4735,10 +4776,10 @@ LiGRO v 0.6 - Output of {0}
             find1=os.path.exists('md_an.tpr')
             find2=os.path.exists('md_an.xtc')
             if find1 == False:
-                mbox.showerror("Error", "TPR file not found.")
+                showdialog("Error", "TPR file not found.")
                 pass
             elif find2 == False:
-                mbox.showerror("Error", "XTC file not found.")
+                showdialog("Error", "XTC file not found.")
                 pass
             else:
                 pass
@@ -4753,10 +4794,10 @@ LiGRO v 0.6 - Output of {0}
             else:
               pass
             os.system(command)
-            pj = str(self.project.getvalue())
+            pj = str(self.project.text())
             an4 = 'msd_{0}.xvg'.format(pj)
             shutil.copy('msd.xvg', an4)
-            directory = str(self.save.getvalue())
+            directory = str(self.save.text())
             shutil.copy2(an4, directory)
             t, rmsd = np.loadtxt("msd.xvg", unpack=True)
             fig = plt.figure(figsize=(10, 5))
@@ -4776,13 +4817,12 @@ LiGRO v 0.6 - Output of {0}
             plt.show()
             data0 = ('min = ' + str(min) + '\nmax = ' + str(max) + '\nmean =' + str(mean))
             text0 = """
-LiGRO v 0.6 - Output of {0}
+LiGRO v 1.0 - Output of {0}
 ---------------------------------------------
             """.format(analysis)
             try:
               with open('msd_out.txt', 'w') as msd_infile:
-                msd_out = tkFileDialog.asksaveasfile(mode='w', initialdir=path2, filetypes =(("Text File", "*.txt"),("All Files","*.*")),
-    title = "Save MSD statistic file.", initialfile='ligro_MSD')
+                msd_out, _ = QFileDialog.getSaveFileName(self,"Save MSD statistic file", os.path.join(path2+'ligro_msd_out.txt'), 'Text file(*.txt)')
                 msd_out.write(text0 + data0)
                 msd_out.close()
                 pass
@@ -4797,10 +4837,10 @@ LiGRO v 0.6 - Output of {0}
             find1=os.path.exists('md_an.tpr')
             find2=os.path.exists('md_an.xtc')
             if find1 == False:
-                mbox.showerror("Error", "TPR file not found.")
+                showdialog("Error", "TPR file not found.")
                 pass
             elif find2 == False:
-                mbox.showerror("Error", "XTC file not found.")
+                showdialog("Error", "XTC file not found.")
                 pass
             else:
                 pass
@@ -4817,10 +4857,10 @@ LiGRO v 0.6 - Output of {0}
             else:
               pass
             os.system(command)
-            pj = str(self.project.getvalue())
+            pj = str(self.sel_proj_name.text())
             an6 = 'hbond_{0}.xvg'.format(pj)
             shutil.copy('hbond.xvg', an6)
-            directory = str(self.save.getvalue())
+            directory = str(self.save.text())
             shutil.copy2(an6, directory)
 
             hbond = pylab.genfromtxt("hbond.xvg")
@@ -4845,7 +4885,7 @@ LiGRO v 0.6 - Output of {0}
                 pass
             find=os.path.exists('md_an.edr')
             if find == False:
-                mbox.showerror("Error", "EDR file not found.")
+                showdialog("Error", "EDR file not found.")
                 pass
 
             else:
@@ -4886,18 +4926,17 @@ LiGRO v 0.6 - Output of {0}
 
 
             try:
-              with open('out.txt') as infile, tkFileDialog.asksaveasfile(mode='w', initialdir=path2, filetypes =(("Text File", "*.txt"),("All Files","*.*")),
-  title = "Save LJSR-CoulSR IE txt file.", initialfile='LJSR-CoulSR_IE') as outfile:
-                  outfile.write('LiGRO v 0.6\n')
-                  outfile.write('Energy                      Average   Err.Est.       RMSD  Tot-Drift\n')
-                  copy = False
-                  for line in infile:
-                      if line.strip() == "Energy                      Average   Err.Est.       RMSD  Tot-Drift":
-                          copy = True
-                      elif copy:
-                          outfile.write(line)
+              with open('out.txt') as infile, QFileDialog.getSaveFileName(self,"Save LJSR-CoulSR IE txt", os.path.join(path2+'ligro_LJSR-CoulSR_IE_out.txt'), 'Text file(*.txt)') as outfile:
+                outfile.write('LiGRO v 1.0\n')
+                outfile.write('Energy                      Average   Err.Est.       RMSD  Tot-Drift\n')
+                copy = False
+                for line in infile:
+                    if line.strip() == "Energy                      Average   Err.Est.       RMSD  Tot-Drift":
+                        copy = True
+                    elif copy:
+                        outfile.write(line)
             except:
-              pass
+                pass
 
     def plip(self):
         try:
@@ -4907,14 +4946,14 @@ LiGRO v 0.6 - Output of {0}
         find1=os.path.exists('md_an.tpr')
         find2=os.path.exists('md_an.xtc')
         if find1 == False:
-            mbox.showerror("Error", "TPR or XTC file not found.")
+            showdialog("Error", "TPR or XTC file not found.")
             pass
         elif find2 == False:
-            mbox.showerror("Error", "TPR or XTC file not found.")
+            showdialog("Error", "TPR or XTC file not found.")
             pass
         else:
             pass
-        timeplip = str(self.ft.getvalue())
+        timeplip = str(self.sel_plip_time.text())
         
         if gromacs_flag('mdrun'):
           command3 = '''trjconv -s md_an.tpr -f md_an.xtc -o plip.pdb -b {0} -e {0} << EOF
@@ -4932,11 +4971,41 @@ LiGRO v 0.6 - Output of {0}
         subprocess.call(['/bin/bash', '-i', '-c', command4])
         with open('plip_out.txt') as plip_infile:
           plip_lines = plip_infile.read()
-          plip_out = tkFileDialog.asksaveasfile(mode='w', initialdir=path2, filetypes =(("Text File", "*.txt"),("All Files","*.*")),
-  title = "Save PLIP report file.", initialfile='report')
+          plip_out, _ = QFileDialog.getSaveFileName(self,"Save PLIP reort file", os.path.join(path2+'ligro_plip_report_out.txt'), 'Text file(*.txt)')
           plip_out.write(plip_lines)
           plip_out.close()
           pass
+
+    def about(self):
+        msgBox = QMessageBox()
+        msgBox.setWindowTitle('About')
+        msgBox.setText('''
+LiGRO - Version 1.0
+This software is available to you under the terms of the GPL-3. See ~/ligro/LICENCE for more informations. Software is created and maintained by Laboratorio de Sintese Organica Medicinal-LaSOM at Universidade Federal do Rio Grande do Sul.
+
+Contributors:
+MSc. Luciano Porto Kagami
+
+luciano_dot_kagami_at_ufrgs_dot_br
+
+Universidade Federal do Rio Grande do Sul Laboratorio de Sintese Organica Medicinal -LaSOM
+
+Av. Ipiranga, 2752 - Azenha, Porto Alegre - RS, 90610-000 - Brazil
+
+''')
+        msgBox.exec_()
+
+    def help(self):
+        webbrowser.open('https://www.ufrgs.br/lasomfarmacia/node/8', new=1, autoraise=True)
+
+
+    def exit(self):
+        reply = QMessageBox.question(None, 'Exit','Do you really want to quit?', QMessageBox.Yes, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            quit()
+        else:
+            None
+          
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
