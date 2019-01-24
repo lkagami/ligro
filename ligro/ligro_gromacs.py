@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 note ="""
----LiGRO - Version 0.6 ---
+---LiGRO - Version 0.7 ---
 
 This software is available to you under the terms of the GPL-3. See ~/ligro/LICENCE for more informations.
 Software is created and maintained by Laboratorio de Sintese Organica Medicinal-LaSOM at
@@ -104,7 +104,7 @@ def gromacs_flag(name):
             return False
     return True
 
-title = 'LiGRO: Version 0.6'
+title = 'LiGRO: Version 0.7'
 
 class GUI:
     def __init__(self, parent):
@@ -624,6 +624,7 @@ class GUI:
                         rcoulomb	    = 1.0		; long range electrostatic cut-off
                         rvdw		    = 1.0		; long range Van der Waals cut-off
                         pbc             = xyz 		; Periodic Boundary Conditions
+                        EOF
                         ''')
             if gromacs_flag('mdrun'):
               os.system('grompp -f em.mdp -c trpb4ion.pdb -p trp.top -o ion.tpr -maxwarn 1000')
@@ -668,6 +669,7 @@ class GUI:
               rcoulomb  = 1.0   ; long range electrostatic cut-off
               rvdw    = 1.0   ; long range Van der Waals cut-off
               pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
+              EOF
               '''.format(nst)
               cmd4 = '''
               cat << EOF >| em_real.mdp
@@ -689,6 +691,7 @@ class GUI:
               rcoulomb  = 1.0   ; long range electrostatic cut-off
               rvdw    = 1.0   ; long range Van der Waals cut-off
               pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
+              EOF
               '''.format(nst)
 
             elif gromacs_flag('gmx'):
@@ -901,6 +904,7 @@ class GUI:
               gen_vel     = yes       ; assign velocities from Maxwell distribution
               gen_temp    = {2}       ; temperature for Maxwell distribution
               gen_seed    = -1        ; generate a random seed'
+              EOF
               '''.format(stnvt, t_st, temp)
 
             elif gromacs_flag('gmx'):
@@ -1004,6 +1008,7 @@ class GUI:
               DispCorr    = EnerPres  ; account for cut-off vdW scheme
               ; Velocity generation
               gen_vel     = no        ; velocity generation off after NVT
+              EOF
               '''.format(stnpt, t_st, temp)
 
 
@@ -1115,6 +1120,7 @@ class GUI:
               DispCorr    = EnerPres  ; account for cut-off vdW scheme
               ; Velocity generation
               gen_vel     = no        ; assign velocities from Maxwell distribution
+              EOF
               '''.format(stmd, t_st, temp)
 
             elif gromacs_flag('gmx'):
@@ -1392,6 +1398,7 @@ class GUI:
                           rcoulomb	    = 1.0		; long range electrostatic cut-off
                           rvdw		    = 1.0		; long range Van der Waals cut-off
                           pbc             = xyz 		; Periodic Boundary Conditions
+                          EOF
                           ''')
               os.system('gmx grompp -f em.mdp -c trpb4ion.pdb -p trp.top -o ion.tpr -maxwarn 1000')
 
@@ -1429,6 +1436,7 @@ class GUI:
                     rcoulomb  = 1.0   ; long range electrostatic cut-off
                     rvdw    = 1.0   ; long range Van der Waals cut-off
                     pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
+                    EOF
                     '''.format(nst)
                 cmd4 = '''
                             cat << EOF >| em_real.mdp
@@ -1450,6 +1458,7 @@ class GUI:
                             rcoulomb  = 1.0   ; long range electrostatic cut-off
                             rvdw    = 1.0   ; long range Van der Waals cut-off
                             pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
+                            EOF
                             '''.format(nst)
 
               elif gromacs_flag('gmx'):
@@ -1496,7 +1505,7 @@ class GUI:
                   rcoulomb	    = 1.0		; long range electrostatic cut-off
                   rvdw		    = 1.0		; long range Van der Waals cut-off
                   pbc		        = xyz 		; Periodic Boundary Conditions
-                  EOF    = xyz 		; Periodic Boundary Conditions (yes/no)
+                  EOF
                   '''.format(nst)
               else:
                 pass
@@ -1663,6 +1672,7 @@ class GUI:
                 gen_vel     = yes       ; assign velocities from Maxwell distribution
                 gen_temp    = {2}       ; temperature for Maxwell distribution
                 gen_seed    = -1        ; generate a random seed'
+                EOF
                 '''.format(stnvt, t_st, temp)
 
 
@@ -1768,6 +1778,7 @@ class GUI:
                 DispCorr    = EnerPres  ; account for cut-off vdW scheme
                 ; Velocity generation
                 gen_vel     = no        ; velocity generation off after NVT
+                EOF
                 '''.format(stnpt, t_st, temp)
 
               elif gromacs_flag('gmx'):
@@ -1875,6 +1886,7 @@ class GUI:
                   DispCorr    = EnerPres  ; account for cut-off vdW scheme
                   ; Velocity generation
                   gen_vel     = no        ; assign velocities from Maxwell distribution
+                  EOF
                   '''.format(stmd, t_st, temp)
               elif gromacs_flag('gmx'):
                 cmd7 = '''cat << EOF >| md.mdp
@@ -2041,6 +2053,7 @@ class GUI:
                       rcoulomb	    = 1.0		; long range electrostatic cut-off
                       rvdw		    = 1.0		; long range Van der Waals cut-off
                       pbc             = xyz 		; Periodic Boundary Conditions
+                      EOF
                       ''')
           if gromacs_flag('mdrun'):
             os.system('grompp -f em.mdp -c trpb4ion.pdb -p trp.top -o ion.tpr -maxwarn 1000')
@@ -2088,6 +2101,7 @@ class GUI:
               rcoulomb  = 1.0   ; long range electrostatic cut-off
               rvdw    = 1.0   ; long range Van der Waals cut-off
               pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
+              EOF
               '''.format(nst)
             cmd4 = '''
                         cat << EOF >| em_real.mdp
@@ -2109,6 +2123,7 @@ class GUI:
                         rcoulomb  = 1.0   ; long range electrostatic cut-off
                         rvdw    = 1.0   ; long range Van der Waals cut-off
                         pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
+                        EOF
                         '''.format(nst)
 
             if inte == 'SD Algorithm':
@@ -2296,6 +2311,7 @@ class GUI:
             gen_vel     = yes       ; assign velocities from Maxwell distribution
             gen_temp    = {2}       ; temperature for Maxwell distribution
             gen_seed    = -1        ; generate a random seed'
+            EOF
             '''.format(stnvt, t_st, temp)
 
           elif gromacs_flag('gmx'):
@@ -2403,6 +2419,7 @@ class GUI:
             DispCorr    = EnerPres  ; account for cut-off vdW scheme
             ; Velocity generation
             gen_vel     = no        ; velocity generation off after NVT
+            EOF
             '''.format(stnpt, t_st, temp)
 
           elif gromacs_flag('gmx'):
@@ -2511,6 +2528,7 @@ class GUI:
             DispCorr    = EnerPres  ; account for cut-off vdW scheme
             ; Velocity generation
             gen_vel     = no        ; assign velocities from Maxwell distribution
+            EOF
             '''.format(stmd, t_st, temp)
 
           elif gromacs_flag('gmx'):
@@ -2717,6 +2735,7 @@ class GUI:
                         rcoulomb      = 1.0   ; long range electrostatic cut-off
                         rvdw        = 1.0   ; long range Van der Waals cut-off
                         pbc             = xyz     ; Periodic Boundary Conditions
+                        EOF
                         ''')
             if gromacs_flag('mdrun'):
               os.system('grompp -f em.mdp -c trpb4ion.pdb -p trp.top -o ion.tpr -maxwarn 1000')
@@ -2762,6 +2781,7 @@ class GUI:
               rcoulomb  = 1.0   ; long range electrostatic cut-off
               rvdw    = 1.0   ; long range Van der Waals cut-off
               pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
+              EOF
               '''.format(nst)
               cmd4 = '''
               cat << EOF >| em_real.mdp
@@ -2783,6 +2803,7 @@ class GUI:
               rcoulomb  = 1.0   ; long range electrostatic cut-off
               rvdw    = 1.0   ; long range Van der Waals cut-off
               pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
+              EOF
               '''.format(nst)
 
             elif gromacs_flag('gmx'):
@@ -2995,6 +3016,7 @@ class GUI:
               gen_vel     = yes       ; assign velocities from Maxwell distribution
               gen_temp    = {2}       ; temperature for Maxwell distribution
               gen_seed    = -1        ; generate a random seed'
+              EOF
               '''.format(stnvt, t_st, temp)
 
             elif gromacs_flag('gmx'):
@@ -3098,6 +3120,7 @@ class GUI:
               DispCorr    = EnerPres  ; account for cut-off vdW scheme
               ; Velocity generation
               gen_vel     = no        ; velocity generation off after NVT
+              EOF
               '''.format(stnpt, t_st, temp)
 
 
@@ -3207,6 +3230,7 @@ class GUI:
               DispCorr    = EnerPres  ; account for cut-off vdW scheme
               ; Velocity generation
               gen_vel     = no        ; assign velocities from Maxwell distribution
+              EOF
               '''.format(stmd, t_st, temp)
 
             elif gromacs_flag('gmx'):
@@ -3406,6 +3430,7 @@ class GUI:
                       rcoulomb	    = 1.0		; long range electrostatic cut-off
                       rvdw		    = 1.0		; long range Van der Waals cut-off
                       pbc             = xyz 		; Periodic Boundary Conditions
+                      EOF
                       ''')
           if gromacs_flag('mdrun'):
             os.system('grompp -f em.mdp -c trpb4ionl.pdb -p topoll.top -o ionl.tpr -maxwarn 1000')
@@ -3453,6 +3478,7 @@ coulombtype = PME   ; Treatment of long range electrostatic interactions
 rcoulomb  = 1.0   ; long range electrostatic cut-off
 rvdw    = 1.0   ; long range Van der Waals cut-off
 pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
+EOF
             '''.format(lie_nst)
             liecmd4 = '''
 cat << EOF >| em_real.mdp
@@ -3474,6 +3500,7 @@ coulombtype = PME   ; Treatment of long range electrostatic interactions
 rcoulomb  = 1.0   ; long range electrostatic cut-off
 rvdw    = 1.0   ; long range Van der Waals cut-off
 pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
+EOF
                     '''.format(lie_nst)
 
             if lie_inte == 'SD Algorithm':
@@ -3672,6 +3699,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
               gen_vel     = yes       ; assign velocities from Maxwell distribution
               gen_temp    = {2}       ; temperature for Maxwell distribution
               gen_seed    = -1        ; generate a random seed'
+              EOF
               '''.format(stnvt, t_st, temp)
 
           elif gromacs_flag('gmx'):
@@ -3779,6 +3807,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
              DispCorr    = EnerPres  ; account for cut-off vdW scheme
              ; Velocity generation
              gen_vel     = no        ; velocity generation off after NVT
+             EOF
              '''.format(stnpt, t_st, temp)
 
           elif gromacs_flag('gmx'):
@@ -3884,6 +3913,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
              DispCorr    = EnerPres  ; account for cut-off vdW scheme
              ; Velocity generation
              gen_vel     = no        ; assign velocities from Maxwell distribution
+             EOF
              '''.format(stmd, t_st, temp)
 
           elif gromacs_flag('gmx'):
@@ -3984,7 +4014,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
         except:
             pass
         if gromacs_flag('mdrun'):
-          com1= '''echo 9 6 0 | g_energy -f md2.edr > out1.txt'''
+          com1= '''echo 49 50 0 | g_energy -f md2.edr > out1.txt'''
         elif gromacs_flag('gmx'):
           com1= '''echo 50 51 0 | gmx energy -f md2.edr > out1.txt'''
         else:
@@ -4342,7 +4372,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
             plt.show()
             data0 = ('min = ' + str(min) + '\nmax = ' + str(max) + '\nmean =' + str(mean))
             text0 = """
-LiGRO v 0.6 - Output of {0}
+LiGRO v 0.7 - Output of {0}
 ---------------------------------------------
             """.format(analysis)
             try:
@@ -4470,7 +4500,7 @@ LiGRO v 0.6 - Output of {0}
             '\t\nRgymean =' + str(g3mean) + '\t\nRgzmin = ' + str(g4min) + '\t\nRgzmax = ' + str(g4max) + '\t\nRgzmean =' + str(
                 g4mean))
             text = """
-LiGRO v 0.6 - Output of {0}
+LiGRO v 0.7 - Output of {0}
 ---------------------------------------------
             """.format(analysis)
             try:
@@ -4532,7 +4562,7 @@ LiGRO v 0.6 - Output of {0}
             plt.show()
             data0 = ('min = ' + str(min) + '\nmax = ' + str(max) + '\nmean =' + str(mean))
             text0 = """
-LiGRO v 0.6 - Output of {0}
+LiGRO v 0.7 - Output of {0}
 ---------------------------------------------
             """.format(analysis)
             try:
@@ -4644,7 +4674,7 @@ LiGRO v 0.6 - Output of {0}
             try:
               with open('out.txt') as infile, tkFileDialog.asksaveasfile(mode='w', initialdir=path2, filetypes =(("Text File", "*.txt"),("All Files","*.*")),
   title = "Save LJSR-CoulSR IE txt file.", initialfile='LJSR-CoulSR_IE') as outfile:
-                  outfile.write('LiGRO v 0.6\n')
+                  outfile.write('LiGRO v 0.7\n')
                   outfile.write('Energy                      Average   Err.Est.       RMSD  Tot-Drift\n')
                   copy = False
                   for line in infile:
