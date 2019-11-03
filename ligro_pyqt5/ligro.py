@@ -26,8 +26,8 @@ from os import fdopen, remove
 import time
 #from PIL import ImageTk
 import zlib, base64
-#from plip.modules import report
-#plipver = report.__version__
+from plip.modules import report
+plipver = report.__version__
 
 sys.path[:0] = ['../../..']
 
@@ -583,7 +583,7 @@ class Ui_MainWindo(object):
         self.sel_analy.setItemText(4, _translate("MainWindo", "H_bond"))
         self.sel_analy.setItemText(5, _translate("MainWindo", "LJSR-CoulSR IE"))
         self.run_analy.setText(_translate("MainWindo", "Run"))
-        self.groupBox_19.setTitle(_translate("MainWindo", "Protein-Ligand Interaction Profiler (PLIP) v"))
+        self.groupBox_19.setTitle(_translate("MainWindo", "Protein-Ligand Interaction Profiler (PLIP) v"+ plipver))
         self.label_25.setText(_translate("MainWindo", "Frame time (ps):"))
         self.sel_plip_time.setText(_translate("MainWindo", "100"))
         self.run_plip.setText(_translate("MainWindo", "Run"))
