@@ -27,7 +27,7 @@
      <string/>
     </property>
     <property name="currentIndex">
-     <number>4</number>
+     <number>3</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -136,6 +136,9 @@
          <height>23</height>
         </rect>
        </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select a 3D protein file in .pdb format. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>Browse</string>
        </property>
@@ -163,7 +166,7 @@
         <rect>
          <x>10</x>
          <y>30</y>
-         <width>81</width>
+         <width>111</width>
          <height>16</height>
         </rect>
        </property>
@@ -177,7 +180,7 @@
       <widget class="QComboBox" name="csel_ch_met">
        <property name="geometry">
         <rect>
-         <x>110</x>
+         <x>130</x>
          <y>30</y>
          <width>69</width>
          <height>22</height>
@@ -202,9 +205,9 @@
       <widget class="QLabel" name="label_5">
        <property name="geometry">
         <rect>
-         <x>190</x>
+         <x>200</x>
          <y>30</y>
-         <width>61</width>
+         <width>91</width>
          <height>16</height>
         </rect>
        </property>
@@ -215,7 +218,7 @@
       <widget class="QSpinBox" name="sel_net_ch">
        <property name="geometry">
         <rect>
-         <x>260</x>
+         <x>290</x>
          <y>30</y>
          <width>42</width>
          <height>22</height>
@@ -225,9 +228,9 @@
       <widget class="QLabel" name="label_6">
        <property name="geometry">
         <rect>
-         <x>320</x>
+         <x>340</x>
          <y>30</y>
-         <width>61</width>
+         <width>81</width>
          <height>16</height>
         </rect>
        </property>
@@ -238,7 +241,7 @@
       <widget class="QComboBox" name="sel_at_type">
        <property name="geometry">
         <rect>
-         <x>380</x>
+         <x>420</x>
          <y>30</y>
          <width>69</width>
          <height>22</height>
@@ -268,9 +271,9 @@
       <widget class="QLabel" name="label_7">
        <property name="geometry">
         <rect>
-         <x>470</x>
+         <x>510</x>
          <y>30</y>
-         <width>61</width>
+         <width>91</width>
          <height>16</height>
         </rect>
        </property>
@@ -281,7 +284,7 @@
       <widget class="QSpinBox" name="sel_mult">
        <property name="geometry">
         <rect>
-         <x>530</x>
+         <x>590</x>
          <y>30</y>
          <width>42</width>
          <height>22</height>
@@ -309,7 +312,7 @@
         <rect>
          <x>10</x>
          <y>30</y>
-         <width>101</width>
+         <width>131</width>
          <height>16</height>
         </rect>
        </property>
@@ -320,9 +323,9 @@
       <widget class="QComboBox" name="sel_ff">
        <property name="geometry">
         <rect>
-         <x>110</x>
+         <x>140</x>
          <y>30</y>
-         <width>111</width>
+         <width>131</width>
          <height>22</height>
         </rect>
        </property>
@@ -379,8 +382,8 @@
       <widget class="QLabel" name="label_3">
        <property name="geometry">
         <rect>
-         <x>320</x>
-         <y>30</y>
+         <x>310</x>
+         <y>40</y>
          <width>47</width>
          <height>13</height>
         </rect>
@@ -394,7 +397,7 @@
         <rect>
          <x>370</x>
          <y>30</y>
-         <width>51</width>
+         <width>91</width>
          <height>22</height>
         </rect>
        </property>
@@ -429,7 +432,7 @@
         <rect>
          <x>520</x>
          <y>30</y>
-         <width>151</width>
+         <width>191</width>
          <height>20</height>
         </rect>
        </property>
@@ -458,7 +461,7 @@
         <rect>
          <x>10</x>
          <y>30</y>
-         <width>101</width>
+         <width>161</width>
          <height>16</height>
         </rect>
        </property>
@@ -499,9 +502,9 @@
       <widget class="QLabel" name="sel_box">
        <property name="geometry">
         <rect>
-         <x>270</x>
+         <x>240</x>
          <y>30</y>
-         <width>91</width>
+         <width>121</width>
          <height>16</height>
         </rect>
        </property>
@@ -512,7 +515,7 @@
       <widget class="QComboBox" name="sel_water">
        <property name="geometry">
         <rect>
-         <x>110</x>
+         <x>150</x>
          <y>30</y>
          <width>69</width>
          <height>22</height>
@@ -537,10 +540,10 @@
       <widget class="QLabel" name="label_10">
        <property name="geometry">
         <rect>
-         <x>530</x>
+         <x>520</x>
          <y>30</y>
-         <width>47</width>
-         <height>13</height>
+         <width>101</width>
+         <height>16</height>
         </rect>
        </property>
        <property name="text">
@@ -584,7 +587,7 @@
         <rect>
          <x>10</x>
          <y>30</y>
-         <width>141</width>
+         <width>201</width>
          <height>22</height>
         </rect>
        </property>
@@ -607,7 +610,7 @@
       <widget class="QDoubleSpinBox" name="sel_conc">
        <property name="geometry">
         <rect>
-         <x>170</x>
+         <x>220</x>
          <y>30</y>
          <width>62</width>
          <height>22</height>
@@ -629,9 +632,9 @@
      <widget class="QGroupBox" name="groupBox_8">
       <property name="geometry">
        <rect>
-        <x>10</x>
+        <x>0</x>
         <y>20</y>
-        <width>241</width>
+        <width>271</width>
         <height>80</height>
        </rect>
       </property>
@@ -641,9 +644,9 @@
       <widget class="QLabel" name="label_11">
        <property name="geometry">
         <rect>
-         <x>10</x>
+         <x>0</x>
          <y>20</y>
-         <width>151</width>
+         <width>211</width>
          <height>16</height>
         </rect>
        </property>
@@ -654,9 +657,9 @@
       <widget class="QLabel" name="label_12">
        <property name="geometry">
         <rect>
-         <x>10</x>
+         <x>0</x>
          <y>50</y>
-         <width>91</width>
+         <width>121</width>
          <height>16</height>
         </rect>
        </property>
@@ -667,7 +670,7 @@
       <widget class="QDoubleSpinBox" name="sel_int_step">
        <property name="geometry">
         <rect>
-         <x>160</x>
+         <x>210</x>
          <y>20</y>
          <width>62</width>
          <height>22</height>
@@ -689,9 +692,9 @@
       <widget class="QDoubleSpinBox" name="sel_temp">
        <property name="geometry">
         <rect>
-         <x>160</x>
+         <x>201</x>
          <y>50</y>
-         <width>62</width>
+         <width>71</width>
          <height>22</height>
         </rect>
        </property>
@@ -712,9 +715,9 @@
      <widget class="QGroupBox" name="groupBox_11">
       <property name="geometry">
        <rect>
-        <x>410</x>
+        <x>440</x>
         <y>20</y>
-        <width>131</width>
+        <width>151</width>
         <height>80</height>
        </rect>
       </property>
@@ -724,9 +727,9 @@
       <widget class="QSpinBox" name="sel_nvt_step">
        <property name="geometry">
         <rect>
-         <x>50</x>
+         <x>60</x>
          <y>30</y>
-         <width>71</width>
+         <width>91</width>
          <height>22</height>
         </rect>
        </property>
@@ -760,9 +763,9 @@
      <widget class="QGroupBox" name="groupBox_12">
       <property name="geometry">
        <rect>
-        <x>569</x>
+        <x>599</x>
         <y>20</y>
-        <width>141</width>
+        <width>151</width>
         <height>80</height>
        </rect>
       </property>
@@ -772,7 +775,7 @@
       <widget class="QLabel" name="label_15">
        <property name="geometry">
         <rect>
-         <x>10</x>
+         <x>0</x>
          <y>30</y>
          <width>47</width>
          <height>13</height>
@@ -787,7 +790,7 @@
         <rect>
          <x>50</x>
          <y>30</y>
-         <width>71</width>
+         <width>91</width>
          <height>22</height>
         </rect>
        </property>
@@ -810,7 +813,7 @@
        <rect>
         <x>10</x>
         <y>120</y>
-        <width>141</width>
+        <width>191</width>
         <height>80</height>
        </rect>
       </property>
@@ -833,9 +836,9 @@
       <widget class="QSpinBox" name="sel_md_step">
        <property name="geometry">
         <rect>
-         <x>60</x>
+         <x>70</x>
          <y>30</y>
-         <width>71</width>
+         <width>101</width>
          <height>22</height>
         </rect>
        </property>
@@ -858,7 +861,7 @@
        <rect>
         <x>270</x>
         <y>20</y>
-        <width>131</width>
+        <width>161</width>
         <height>80</height>
        </rect>
       </property>
@@ -881,9 +884,9 @@
       <widget class="QSpinBox" name="sel_min_step">
        <property name="geometry">
         <rect>
-         <x>50</x>
+         <x>60</x>
          <y>20</y>
-         <width>61</width>
+         <width>81</width>
          <height>22</height>
         </rect>
        </property>
@@ -905,7 +908,7 @@
         <rect>
          <x>8</x>
          <y>50</y>
-         <width>101</width>
+         <width>131</width>
          <height>22</height>
         </rect>
        </property>
@@ -943,7 +946,7 @@
         <rect>
          <x>10</x>
          <y>20</y>
-         <width>71</width>
+         <width>101</width>
          <height>16</height>
         </rect>
        </property>
@@ -954,9 +957,9 @@
       <widget class="QLineEdit" name="sel_proj_name">
        <property name="geometry">
         <rect>
-         <x>90</x>
+         <x>110</x>
          <y>20</y>
-         <width>181</width>
+         <width>161</width>
          <height>20</height>
         </rect>
        </property>
@@ -964,7 +967,7 @@
       <widget class="QLineEdit" name="sel_sav_direc">
        <property name="geometry">
         <rect>
-         <x>370</x>
+         <x>390</x>
          <y>20</y>
          <width>361</width>
          <height>20</height>
@@ -974,9 +977,9 @@
       <widget class="QLabel" name="label_18">
        <property name="geometry">
         <rect>
-         <x>290</x>
+         <x>280</x>
          <y>20</y>
-         <width>81</width>
+         <width>101</width>
          <height>16</height>
         </rect>
        </property>
@@ -989,7 +992,7 @@
         <rect>
          <x>10</x>
          <y>50</y>
-         <width>111</width>
+         <width>151</width>
          <height>17</height>
         </rect>
        </property>
@@ -1005,7 +1008,7 @@
         <rect>
          <x>290</x>
          <y>50</y>
-         <width>75</width>
+         <width>101</width>
          <height>23</height>
         </rect>
        </property>
@@ -1016,9 +1019,9 @@
       <widget class="QPushButton" name="run_md">
        <property name="geometry">
         <rect>
-         <x>660</x>
+         <x>624</x>
          <y>50</y>
-         <width>75</width>
+         <width>111</width>
          <height>23</height>
         </rect>
        </property>
@@ -1032,7 +1035,7 @@
        <rect>
         <x>10</x>
         <y>110</y>
-        <width>281</width>
+        <width>301</width>
         <height>80</height>
        </rect>
       </property>
@@ -1070,7 +1073,7 @@
         <rect>
          <x>160</x>
          <y>30</y>
-         <width>111</width>
+         <width>131</width>
          <height>23</height>
         </rect>
        </property>
@@ -1082,10 +1085,10 @@
      <widget class="QGroupBox" name="groupBox_15">
       <property name="geometry">
        <rect>
-        <x>300</x>
+        <x>320</x>
         <y>110</y>
-        <width>471</width>
-        <height>80</height>
+        <width>451</width>
+        <height>101</height>
        </rect>
       </property>
       <property name="title">
@@ -1117,27 +1120,17 @@
         <string>No select folder</string>
        </property>
       </widget>
-     </widget>
-     <widget class="QGroupBox" name="groupBox_16">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>200</y>
-        <width>761</width>
-        <height>201</height>
-       </rect>
-      </property>
-      <property name="title">
-       <string>Output</string>
-      </property>
-      <widget class="QPlainTextEdit" name="md_out">
+      <widget class="QPushButton" name="run_bkp_bt">
        <property name="geometry">
         <rect>
-         <x>0</x>
-         <y>20</y>
-         <width>761</width>
-         <height>171</height>
+         <x>10</x>
+         <y>60</y>
+         <width>91</width>
+         <height>23</height>
         </rect>
+       </property>
+       <property name="text">
+        <string>Run backup</string>
        </property>
       </widget>
      </widget>
@@ -1161,9 +1154,9 @@
       <widget class="QLineEdit" name="sel_tpr">
        <property name="geometry">
         <rect>
-         <x>130</x>
+         <x>170</x>
          <y>20</y>
-         <width>481</width>
+         <width>441</width>
          <height>21</height>
         </rect>
        </property>
@@ -1197,9 +1190,9 @@
       <widget class="QLineEdit" name="sel_xtc">
        <property name="geometry">
         <rect>
-         <x>130</x>
+         <x>170</x>
          <y>50</y>
-         <width>481</width>
+         <width>441</width>
          <height>21</height>
         </rect>
        </property>
@@ -1207,9 +1200,9 @@
       <widget class="QLineEdit" name="sel_edr">
        <property name="geometry">
         <rect>
-         <x>130</x>
+         <x>170</x>
          <y>80</y>
-         <width>481</width>
+         <width>441</width>
          <height>21</height>
         </rect>
        </property>
@@ -1232,7 +1225,7 @@
         <rect>
          <x>16</x>
          <y>20</y>
-         <width>81</width>
+         <width>121</width>
          <height>20</height>
         </rect>
        </property>
@@ -1245,7 +1238,7 @@
         <rect>
          <x>16</x>
          <y>50</y>
-         <width>81</width>
+         <width>111</width>
          <height>20</height>
         </rect>
        </property>
@@ -1258,7 +1251,7 @@
         <rect>
          <x>16</x>
          <y>80</y>
-         <width>81</width>
+         <width>111</width>
          <height>20</height>
         </rect>
        </property>
@@ -1284,7 +1277,7 @@
         <rect>
          <x>10</x>
          <y>30</y>
-         <width>81</width>
+         <width>121</width>
          <height>16</height>
         </rect>
        </property>
@@ -1295,9 +1288,9 @@
       <widget class="QComboBox" name="sel_struc">
        <property name="geometry">
         <rect>
-         <x>100</x>
+         <x>130</x>
          <y>30</y>
-         <width>101</width>
+         <width>131</width>
          <height>22</height>
         </rect>
        </property>
@@ -1330,9 +1323,9 @@
       <widget class="QLabel" name="label_24">
        <property name="geometry">
         <rect>
-         <x>220</x>
+         <x>280</x>
          <y>30</y>
-         <width>81</width>
+         <width>111</width>
          <height>16</height>
         </rect>
        </property>
@@ -1343,7 +1336,7 @@
       <widget class="QComboBox" name="sel_analy">
        <property name="geometry">
         <rect>
-         <x>310</x>
+         <x>390</x>
          <y>30</y>
          <width>101</width>
          <height>22</height>
@@ -1383,7 +1376,7 @@
       <widget class="QPushButton" name="run_analy">
        <property name="geometry">
         <rect>
-         <x>460</x>
+         <x>530</x>
          <y>30</y>
          <width>75</width>
          <height>23</height>
@@ -1409,9 +1402,9 @@
       <widget class="QLabel" name="label_25">
        <property name="geometry">
         <rect>
-         <x>20</x>
+         <x>0</x>
          <y>20</y>
-         <width>81</width>
+         <width>111</width>
          <height>16</height>
         </rect>
        </property>
@@ -1422,7 +1415,7 @@
       <widget class="QLineEdit" name="sel_plip_time">
        <property name="geometry">
         <rect>
-         <x>100</x>
+         <x>120</x>
          <y>20</y>
          <width>113</width>
          <height>20</height>
@@ -1435,7 +1428,7 @@
       <widget class="QPushButton" name="run_plip">
        <property name="geometry">
         <rect>
-         <x>230</x>
+         <x>250</x>
          <y>20</y>
          <width>75</width>
          <height>23</height>
@@ -1443,29 +1436,6 @@
        </property>
        <property name="text">
         <string>Run</string>
-       </property>
-      </widget>
-     </widget>
-     <widget class="QGroupBox" name="groupBox_20">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>280</y>
-        <width>751</width>
-        <height>121</height>
-       </rect>
-      </property>
-      <property name="title">
-       <string>Output</string>
-      </property>
-      <widget class="QPlainTextEdit" name="analy_out">
-       <property name="geometry">
-        <rect>
-         <x>0</x>
-         <y>20</y>
-         <width>751</width>
-         <height>101</height>
-        </rect>
        </property>
       </widget>
      </widget>
@@ -1509,7 +1479,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_Help">
@@ -1535,6 +1505,10 @@
    </property>
   </action>
   <action name="actionAbout">
+   <property name="icon">
+    <iconset>
+     <normaloff>../../Downloads/25269301.png</normaloff>../../Downloads/25269301.png</iconset>
+   </property>
    <property name="text">
     <string>About</string>
    </property>
