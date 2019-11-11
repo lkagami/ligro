@@ -457,7 +457,7 @@ class Ui_MainWindo(object):
         self.run_plip.clicked.connect(self.plip)
         self.tabWidget.addTab(self.tab_2, "")
         self.label = QtWidgets.QLabel(self.centralwidget)
-        self.label.setGeometry(QtCore.QRect(90, 10, 631, 21))
+        self.label.setGeometry(QtCore.QRect(60, 10, 800, 21))
         font = QtGui.QFont()
         font.setPointSize(14)
         self.label.setFont(font)
