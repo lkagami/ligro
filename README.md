@@ -1,4 +1,4 @@
-# LiGRO - Version 0.7
+# LiGRO - Version 1.0
 
 This software is available to you under the terms of the GPL-3. See ~/ligro/LICENCE for more informations.
 Software is created and maintained by Laboratorio de Sintese Organica Medicinal-LaSOM at
