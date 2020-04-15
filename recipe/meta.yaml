@@ -1,6 +1,6 @@
 package:
   name: ligro
-  version: "0.7"
+  version: "1.0"
 
 source:
   git_rev: "recipe"
