@@ -653,24 +653,24 @@ class Ui_MainWindo(object):
 
     def open_backup_folder(self):
         try:
-            self.bkp_folder = QtWidgets.QFileDialog.getExistingDirectory(None, 
-                                                         "Select Backup folder", 
-                                                         path2, 
+            self.bkp_folder = QtWidgets.QFileDialog.getExistingDirectory(None,
+                                                         "Select Backup folder",
+                                                         path2,
                                                          QtWidgets.QFileDialog.ShowDirsOnly)
             self.sel_bkp_fol.setText(self.bkp_folder)
             self.path4 = self.bkp_folder
-        
+
         except:
-            self.bkp_path['text'] = 'No select folder' 
-    
-    
+            self.bkp_path['text'] = 'No select folder'
+
+
 
     def choose_simulation_save_tpr_file(self):
 
       pj = str(self.sel_proj_name.text())
       dr = str(self.sel_sav_direc.text())
       path3 = dr+'/'+pj+ '_results'
-      
+
       if self.sel_exp_fol.isChecked():
         if not os.path.exists(path3):
           os.makedirs(path3)
@@ -698,11 +698,11 @@ class Ui_MainWindo(object):
           os.chdir(path)
         except:
           pass
-   
+
       find1=os.path.exists('Ligand.mol2')
       find2=os.path.exists('Cofactor.mol2')
       find3=os.path.exists('protein.pdb')
-        
+
       if find1 == False:
           showdialog("INFO", "Run Protein simulation")
           self.mount_simulation_prot()
@@ -727,7 +727,7 @@ class Ui_MainWindo(object):
           pass
 
     def choose_run_simulation(self):
-      
+
       pj = str(self.sel_proj_name.text())
       dr = str(self.sel_sav_direc.text())
       path3 = dr+'/'+pj
@@ -759,7 +759,7 @@ class Ui_MainWindo(object):
           os.chdir(path)
         except:
           pass
-   
+
       find1=os.path.exists('Ligand.mol2')
       find2=os.path.exists('Cofactor.mol2')
       find3=os.path.exists('protein.pdb')
@@ -788,7 +788,7 @@ class Ui_MainWindo(object):
           pass
 
     def run_bkp_file(self):
-        
+
         if self.path4 is not None:
           print(self.path4)
           find_tpr=os.path.exists(self.path4 + '/md.tpr')
@@ -838,7 +838,7 @@ class Ui_MainWindo(object):
             pass
         out_pdb2gmx = os.system(cmd)
 
-        if out_pdb2gmx == 0:  
+        if out_pdb2gmx == 0:
           try:
             pmol = PandasMol2().read_mol2('Ligand.mol2')
             subst = pmol.df.iloc[0]['subst_name']
@@ -921,10 +921,10 @@ class Ui_MainWindo(object):
             else:
                 c_ion = '-conc ' + self.sel_conc.text()
             if gromacs_flag('mdrun'):
-              cmd2 = 'echo SOL|genion -s ion.tpr -o trpb4em.pdb -neutral {} -p trp.top'.format(c_ion)              
+              cmd2 = 'echo SOL|genion -s ion.tpr -o trpb4em.pdb -neutral {} -p trp.top'.format(c_ion)
             elif gromacs_flag('gmx'):
               cmd2 = 'echo SOL|gmx genion -s ion.tpr -o trpb4em.pdb -neutral {} -p trp.top'.format(c_ion)
-              
+
             os.system(cmd2)
 
             inte = self.sel_min_alg.currentText()
@@ -1467,7 +1467,7 @@ class Ui_MainWindo(object):
             else:
                 showdialog('No', 'Process has been cancelled')
                 quit()
-            
+
             if gromacs_flag('mdrun'):
               os.system('echo 2|genrestr -f Ligand.acpype/Ligand_GMX.gro -o posre_LIG.itp -fc 1000 1000 1000')
               os.system(r'''
@@ -1546,7 +1546,7 @@ class Ui_MainWindo(object):
             showdialog("Error", "Mol2 (ligand) file not recognized.. Please try again.")
             quit()
 
-          
+
           try:
             pmol = PandasMol2().read_mol2('Cofactor.mol2')
             subst = pmol.df.iloc[0]['subst_name']
@@ -1561,8 +1561,8 @@ class Ui_MainWindo(object):
             move(abs_path, 'Cofactor.mol2')
           except:
             showdialog("Error", "Mol2 (cofactor) file not recognized.. Please try again.")
-            quit()  
-          
+            quit()
+
           cm = str(self.csel_ch_met.currentText())
           nc = str(self.sel_net_ch.text())
           mt = str(self.sel_mult.text())
@@ -1571,7 +1571,7 @@ class Ui_MainWindo(object):
           cmdd = 'acpype -i Cofactor.mol2 -c {0} -n {1} -m {2} -a {3}'.format(cm, nc, mt, at)
           acp0 = os.system(cmdd0)
           acp1 = os.system(cmdd)
-          
+
           if acp0 == 0:
             if acp1 == 0:
               os.system("grep -h 'ATOM ' trp.pdb Ligand.acpype/Ligand_NEW.pdb > complex.pdb")
@@ -1657,10 +1657,10 @@ class Ui_MainWindo(object):
               if gromacs_flag('mdrun'):
                 os.system('genbox -cp trpb4solv.pdb -cs spc216.gro -o trpb4ion.pdb -p trp.top')
               elif gromacs_flag('gmx'):
-                os.system('gmx solvate -cp trpb4solv.pdb -cs spc216.gro -o trpb4ion.pdb -p trp.top')  
+                os.system('gmx solvate -cp trpb4solv.pdb -cs spc216.gro -o trpb4ion.pdb -p trp.top')
               else:
                 pass
-              
+
               os.system('''
                           cat << EOF >| em.mdp
                           ; LINES STARTING WITH ';' ARE COMMENTS
@@ -2271,11 +2271,11 @@ class Ui_MainWindo(object):
             else:
               showdialog('Error', 'ACPYPE error in Cofactor. Process has been cancelled')
               quit()
-          
+
           else:
             showdialog('Error', 'ACPYPE error in Ligand. Process has been cancelled')
             quit()
-        
+
         else:
           showdialog('Error', 'PDB2GMX error (Receptor). Process has been cancelled')
           quit()
@@ -2301,7 +2301,7 @@ class Ui_MainWindo(object):
         if gromacs_flag('mdrun'):
           cmd = 'pdb2gmx -ff {0} -f protein_clean.pdb -o trp.pdb -p trp.top -water {1} {2}'.format(ff, wt, ig)
         elif gromacs_flag('gmx'):
-          cmd = 'gmx pdb2gmx -ff {0} -f protein_clean.pdb -o trp.pdb -p trp.top -water {1} {2}'.format(ff, wt, ig)  
+          cmd = 'gmx pdb2gmx -ff {0} -f protein_clean.pdb -o trp.pdb -p trp.top -water {1} {2}'.format(ff, wt, ig)
         else:
           pass
 
@@ -2348,7 +2348,7 @@ class Ui_MainWindo(object):
           if gromacs_flag('mdrun'):
             os.system('grompp -f em.mdp -c trpb4ion.pdb -p trp.top -o ion.tpr -maxwarn 1000')
           elif gromacs_flag('gmx'):
-            os.system('gmx grompp -f em.mdp -c trpb4ion.pdb -p trp.top -o ion.tpr -maxwarn 1000') 
+            os.system('gmx grompp -f em.mdp -c trpb4ion.pdb -p trp.top -o ion.tpr -maxwarn 1000')
           else:
             pass
           if self.sel_ioniz.currentText() == 'Na (Number)':
@@ -2655,7 +2655,7 @@ class Ui_MainWindo(object):
 
           os.system(cmd5)
 
-          
+
 
           if gromacs_flag('mdrun'):
             cmd6 = '''
@@ -2955,8 +2955,8 @@ class Ui_MainWindo(object):
         elif gromacs_flag('gmx'):
           cmd = 'gmx pdb2gmx -ff {0} -f protein_clean.pdb -o trp.pdb -p trp.top -water {1} {2}'.format(ff, wt, ig)
           out_pdb2gmx = os.system(cmd)
-          
-        if out_pdb2gmx == 0:  
+
+        if out_pdb2gmx == 0:
           try:
             pmol = PandasMol2().read_mol2('Ligand.mol2')
             subst = pmol.df.iloc[0]['subst_name']
@@ -3040,10 +3040,10 @@ class Ui_MainWindo(object):
                 c_ion = '-conc ' + self.sel_conc.text()
             if gromacs_flag('mdrun'):
               cmd2 = 'echo SOL|genion -s ion.tpr -o trpb4em.pdb -neutral {} -p trp.top'.format(c_ion)
-              
+
             elif gromacs_flag('gmx'):
               cmd2 = 'echo SOL|gmx genion -s ion.tpr -o trpb4em.pdb -neutral {} -p trp.top'.format(c_ion)
-              
+
             os.system(cmd2)
 
             inte = self.sel_min_alg.currentText()
@@ -3645,7 +3645,7 @@ class Ui_MainWindo(object):
         except:
           showdialog("Error", "Mol2 file not recognized.. Please try again.")
           quit()
-        
+
         cm = str(self.csel_ch_met.currentText())
         nc = str(self.sel_net_ch.text())
         mt = str(self.sel_mult.text())
@@ -3683,7 +3683,7 @@ class Ui_MainWindo(object):
 
           bx = str(self.comboBox_5.currentText())
           dst = str(self.sel_dist.text())
-          
+
           if gromacs_flag('mdrun'):
             liecmd1 = 'editconf -bt {0} -f Ligand.gro -o trpb4solvl.pdb -d {1}'.format(bx, dst)
             os.system(liecmd1)
@@ -3722,7 +3722,7 @@ class Ui_MainWindo(object):
           elif gromacs_flag('gmx'):
             os.system('gmx grompp -f em.mdp -c trpb4ionl.pdb -p topoll.top -o ionl.tpr -maxwarn 1000')
           else:
-            pass  
+            pass
           if self.sel_ioniz.currentText()  == 'Na (Number)':
               c_ion = '-np ' + self.sel_conc.text()
           elif self.sel_ioniz.currentText()  == 'Cl (Number)':
@@ -3735,14 +3735,14 @@ class Ui_MainWindo(object):
           elif gromacs_flag('gmx'):
             liecmd2 = 'echo SOL|gmx genion -s ionl.tpr -o trpb4eml.pdb -neutral {} -p topoll.top'.format(c_ion)
           else:
-            pass  
+            pass
           os.system(liecmd2)
 
           lie_inte = self.sel_min_alg.currentText()
 
           lie_nst = self.sel_min_step.text()
 
-          
+
           if gromacs_flag('mdrun'):
             liecmd3 = '''
             cat << EOF >| em_real.mdp
@@ -3804,7 +3804,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
                 System
                 EOF
                 ''')
-                
+
             else:
                 os.system(liecmd3)
                 os.system('grompp -f em_real.mdp -c trpb4eml.pdb -p topoll.top -o eml.tpr -maxwarn 1000')
@@ -3826,7 +3826,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
                             EOF
                             ''')
 
-          elif gromacs_flag('gmx'):      
+          elif gromacs_flag('gmx'):
 
               liecmd3 = '''
                   cat << EOF >| em_real.mdp
@@ -3892,7 +3892,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
                   System
                   EOF
                   ''')
-                  
+
               else:
                   os.system(liecmd3)
                   os.system('gmx grompp -f em_real.mdp -c trpb4eml.pdb -p topoll.top -o eml.tpr -maxwarn 1000')
@@ -3913,10 +3913,10 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
                               System
                               EOF
                               ''')
-          
+
           else:
             pass
-          
+
           os.system('mv em_2l.pdb eml.pdb')
           os.system('''
                             make_ndx -f eml.gro -o index_lie.ndx << EOF
@@ -3931,7 +3931,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
           temp = str(self.sel_temp.text())
           t_st = str(self.sel_int_step.text())
 
-          
+
           if gromacs_flag('mdrun'):
               os.system('''
                             make_ndx -f eml.gro -o index_lie.ndx << EOF
@@ -4040,7 +4040,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
           else:
             pass
           os.system(cmd5)
-          
+
           if gromacs_flag('mdrun'):
              cmd6 = '''
              cat << EOF >| npt2.mdp
@@ -4315,7 +4315,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
                   print('LJ')
                   match1 = re.split(r'\s+', line)
                   pass
-                
+
           except UnboundLocalError:
             showdialog('Error', 'Please try to use other simulation type box.')
             quit()
@@ -4335,7 +4335,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
             quit()
         else:
           pass
-        if gromacs_flag('mdrun'):  
+        if gromacs_flag('mdrun'):
           coul = match0[5]
           lj = match1[5]
         elif gromacs_flag('gmx'):
@@ -4390,7 +4390,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
 
       if gromacs_flag('mdrun'):
         os.system("echo 'mdrun -v -deffnm md -cpt 1' >> queue.sh")
-      
+
       elif gromacs_flag('gmx'):
         os.system("echo 'gmx mdrun -v -deffnm md -cpt 1' >> queue.sh")
       else:
@@ -4398,7 +4398,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
       os.system('chmod 777 queue.sh')
       os.system('./queue.sh')
       pj = str(self.sel_proj_name.text())
-      
+
       md1 = '{0}.xtc'.format(pj)
       md2 = '{0}.edr'.format(pj)
       md3 = '{0}.gro'.format(pj)
@@ -4418,7 +4418,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
       		pass
 
       find1=os.path.exists('Ligand.mol2')
-     
+
       if gromacs_flag('mdrun'):
         if find1 == False:
           os.system('''
@@ -4483,7 +4483,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
                                                      EOF
                                                      ''')
       elif gromacs_flag('gmx'):
-        if find1 == False:    
+        if find1 == False:
 
           os.system('''
                                                gmx trjconv -f md.gro -s md.tpr -pbc nojump -ur compact -center -o md_2.gro << EOF
@@ -4549,7 +4549,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
       else:
         pass
       pj = str(self.sel_proj_name.text())
-      
+
       md1 = '{0}.xtc'.format(pj)
       md2 = '{0}.edr'.format(pj)
       md3 = '{0}.gro'.format(pj)
@@ -4608,7 +4608,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
 
             #
     def RMSD(self):
-        
+
         struct = str(self.sel_struc.currentText())
         analysis=str(self.sel_analy.currentText())
 
@@ -4630,18 +4630,18 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
                 pass
 
             if gromacs_flag('mdrun'):
-              command= ''' g_rms -s md_an.tpr -f md_an.xtc -o rmsd.xvg -xvg 
+              command= ''' g_rms -s md_an.tpr -f md_an.xtc -o rmsd.xvg -xvg
                << EOF
                                     {0}
                                     {0}
                                     EOF '''.format(struct)
-            elif gromacs_flag('gmx'):    
+            elif gromacs_flag('gmx'):
               command= ''' gmx rms -s md_an.tpr -f md_an.xtc -o rmsd.xvg -xvg none << EOF
                                     {0}
                                     {0}
                                     EOF '''.format(struct)
             else:
-              pass                        
+              pass
             os.system(command)
             pj = str(self.sel_proj_name.text())
             an1 = 'rmsd_{0}.xvg'.format(pj)
@@ -4693,11 +4693,11 @@ LiGRO v 1.0 - Output of {0}
                 pass
             else:
                 pass
-            if gromacs_flag('mdrun'):    
+            if gromacs_flag('mdrun'):
               command1 = ''' g_rmsf -s md_an.tpr -f md_an.xtc -o rmsf.xvg -xvg none -res << EOF
                                                 {0}
                                                 EOF '''.format(struct)
-            elif gromacs_flag('gmx'):    
+            elif gromacs_flag('gmx'):
               command1 = ''' gmx rmsf -s md_an.tpr -f md_an.xtc -o rmsf.xvg -xvg none -res << EOF
                                                 {0}
                                                 EOF '''.format(struct)
@@ -4737,11 +4737,11 @@ LiGRO v 1.0 - Output of {0}
                 pass
             else:
                 pass
-            if gromacs_flag('mdrun'):    
+            if gromacs_flag('mdrun'):
               command2 = ''' g_gyrate -s md_an.tpr -f md_an.xtc -o gyrate.xvg -xvg none << EOF
                                                 {0}
-                                                EOF '''.format(struct)    
-            elif gromacs_flag('gmx'):    
+                                                EOF '''.format(struct)
+            elif gromacs_flag('gmx'):
               command2 = ''' gmx gyrate -s md_an.tpr -f md_an.xtc -o gyrate.xvg -xvg none << EOF
                                                 {0}
                                                 EOF '''.format(struct)
@@ -4804,7 +4804,7 @@ LiGRO v 1.0 - Output of {0}
                 pass
             except:
               pass
-            
+
         elif analysis == 'MSD':
             try:
                 os.chdir(path)
@@ -4820,11 +4820,11 @@ LiGRO v 1.0 - Output of {0}
                 pass
             else:
                 pass
-            if gromacs_flag('mdrun'):    
+            if gromacs_flag('mdrun'):
               command= ''' g_msd -s md_an.tpr -f md_an.xtc -o msd.xvg -xvg none << EOF
                                     {0}
-                                    EOF '''.format(struct)    
-            elif gromacs_flag('gmx'):    
+                                    EOF '''.format(struct)
+            elif gromacs_flag('gmx'):
               command= ''' gmx msd -s md_an.tpr -f md_an.xtc -o msd.xvg -xvg none << EOF
                                     {0}
                                     EOF '''.format(struct)
@@ -4881,12 +4881,12 @@ LiGRO v 1.0 - Output of {0}
                 pass
             else:
                 pass
-            if gromacs_flag('mdrun'):    
+            if gromacs_flag('mdrun'):
               command= ''' g_hbond -s md_an.tpr -f md_an.xtc -num hbond.xvg -xvg none << EOF
                                     Other
                                     Protein
-                                    '''    
-            elif gromacs_flag('gmx'):    
+                                    '''
+            elif gromacs_flag('gmx'):
               command= ''' gmx hbond -s md_an.tpr -f md_an.xtc -num hbond.xvg -xvg none << EOF
                                     Other
                                     Protein
@@ -4991,7 +4991,7 @@ LiGRO v 1.0 - Output of {0}
         else:
             pass
         timeplip = str(self.sel_plip_time.text())
-        
+
         if gromacs_flag('mdrun'):
           command3 = '''trjconv -s md_an.tpr -f md_an.xtc -o plip.pdb -b {0} -e {0} << EOF
                    non-Water
@@ -5043,9 +5043,8 @@ Av. Ipiranga, 2752 - Azenha, Porto Alegre - RS, 90610-000 - Brazil
         else:
             None
 
-    
 
-if __name__ == "__main__":
+def main_init():
     import sys
     app = QtWidgets.QApplication(sys.argv)
     MainWindo = QtWidgets.QMainWindow()
@@ -5056,3 +5055,5 @@ if __name__ == "__main__":
     MainWindo.show()
     sys.exit(app.exec_())
 
+if __name__ == "__main__":
+    main_init()
