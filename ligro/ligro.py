@@ -51,7 +51,7 @@ def gromacs_flag(name):
             return False
     return True
 
-title = 'LiGRO: Version 1.0'
+title = 'LiGRO: Version 1.0.1'
 
 def iconFromBase64(base64):
     pixmap = QtGui.QPixmap()
@@ -69,6 +69,11 @@ def showdialog(msgtitle,msgtxt):
 
 class Ui_MainWindo(object):
     def setupUi(self, MainWindo):
+        if gromacs_flag('mdrun') or gromacs_flag('gmx'):
+            pass
+        else:
+            showdialog('GROMACS not found','Please, install GROMACS package.')
+            quit()
         MainWindo.setObjectName("MainWindo")
         MainWindo.resize(800, 545)
         self.centralwidget = QtWidgets.QWidget(MainWindo)
@@ -490,14 +495,15 @@ class Ui_MainWindo(object):
         self.menu_Help.addAction(self.actionExit)
         self.menu_Help.addAction(self.menuHelp.menuAction())
         self.menubar.addAction(self.menu_Help.menuAction())
-
+        self.actionHelp_2.triggered.connect(self.help)
+        self.actionAbout.triggered.connect(self.about)
         self.retranslateUi(MainWindo)
         self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindo)
 
     def retranslateUi(self, MainWindo):
         _translate = QtCore.QCoreApplication.translate
-        MainWindo.setWindowTitle(_translate("MainWindo", "LiGRO v.1.0"))
+        MainWindo.setWindowTitle(_translate("MainWindo", "LiGRO v.1.0.1"))
         self.groupBox_3.setTitle(_translate("MainWindo", "Select Ligand MOL2 File"))
         self.browse_lig_mol2.setText(_translate("MainWindo", "Browse"))
         self.browse_lig_mol2.setToolTip(_translate("MainWindo", "<html><head/><body><p>Select a 3D ligand file in .mol2 format. </p></body></html>"))
@@ -4336,11 +4342,19 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
         else:
           pass
         if gromacs_flag('mdrun'):
-          coul = match0[5]
-          lj = match1[5]
+            try:
+                coul = match0[5]
+                lj = match1[5]
+            except UnboundLocalError:
+              showdialog('Error', 'Please try to use other simulation type box (Dodecahedron) or increase the distance.')
+              quit()
         elif gromacs_flag('gmx'):
-          coul = match0[4]
-          lj = match1[4]
+            try:
+                coul = match0[4]
+                lj = match1[4]
+            except UnboundLocalError:
+              showdialog('Error', 'Please try to use other simulation type box (Dodecahedron) or increase the distance.')
+              quit()
         else:
           pass
 
@@ -4666,7 +4680,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
             plt.show()
             data0 = ('min = ' + str(min) + '\nmax = ' + str(max) + '\nmean =' + str(mean))
             text0 = """
-LiGRO v 1.0 - Output of {0}
+LiGRO v 1.0.1 - Output of {0}
 ---------------------------------------------
             """.format(analysis)
             try:
@@ -4793,7 +4807,7 @@ LiGRO v 1.0 - Output of {0}
             '\t\nRgymean =' + str(g3mean) + '\t\nRgzmin = ' + str(g4min) + '\t\nRgzmax = ' + str(g4max) + '\t\nRgzmean =' + str(
                 g4mean))
             text = """
-LiGRO v 1.0 - Output of {0}
+LiGRO v 1.0.1 - Output of {0}
 ---------------------------------------------
             """.format(analysis)
             try:
@@ -4854,7 +4868,7 @@ LiGRO v 1.0 - Output of {0}
             plt.show()
             data0 = ('min = ' + str(min) + '\nmax = ' + str(max) + '\nmean =' + str(mean))
             text0 = """
-LiGRO v 1.0 - Output of {0}
+LiGRO v 1.0.1 - Output of {0}
 ---------------------------------------------
             """.format(analysis)
             try:
@@ -4964,7 +4978,7 @@ LiGRO v 1.0 - Output of {0}
 
             try:
               with open('out.txt') as infile, QFileDialog.getSaveFileName(self,"Save LJSR-CoulSR IE txt", os.path.join(path2+'ligro_LJSR-CoulSR_IE_out.txt'), 'Text file(*.txt)') as outfile:
-                outfile.write('LiGRO v 1.0\n')
+                outfile.write('LiGRO v 1.0.1\n')
                 outfile.write('Energy                      Average   Err.Est.       RMSD  Tot-Drift\n')
                 copy = False
                 for line in infile:
@@ -5017,7 +5031,7 @@ LiGRO v 1.0 - Output of {0}
         msgBox = QMessageBox()
         msgBox.setWindowTitle('About')
         msgBox.setText('''
-LiGRO - Version 1.0
+LiGRO - Version 1.0.1
 This software is available to you under the terms of the GPL-3. See ~/ligro/LICENCE for more informations. Software is created and maintained by Laboratorio de Sintese Organica Medicinal-LaSOM at Universidade Federal do Rio Grande do Sul.
 
 Contributors:
@@ -5033,7 +5047,7 @@ Av. Ipiranga, 2752 - Azenha, Porto Alegre - RS, 90610-000 - Brazil
         msgBox.exec_()
 
     def help(self):
-        webbrowser.open('https://www.ufrgs.br/lasomfarmacia/node/8', new=1, autoraise=True)
+        webbrowser.open_new_tab('https://www.ufrgs.br/lasomfarmacia/node/8')
 
 
     def exit(self):
