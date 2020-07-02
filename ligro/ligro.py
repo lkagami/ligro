@@ -51,7 +51,7 @@ def gromacs_flag(name):
             return False
     return True
 
-title = 'LiGRO: Version 1.0.1'
+title = 'LiGRO: Version 1.1.1'
 
 def iconFromBase64(base64):
     pixmap = QtGui.QPixmap()
@@ -515,7 +515,7 @@ class Ui_MainWindo(object):
 
     def retranslateUi(self, MainWindo):
         _translate = QtCore.QCoreApplication.translate
-        MainWindo.setWindowTitle(_translate("MainWindo", "LiGRO v.1.1"))
+        MainWindo.setWindowTitle(_translate("MainWindo", "LiGRO v.1.1.1"))
         self.groupBox_3.setTitle(_translate("MainWindo", "Select Ligand MOL2 File"))
         self.browse_lig_mol2.setText(_translate("MainWindo", "Browse"))
         self.browse_lig_mol2.setToolTip(_translate("MainWindo", "<html><head/><body><p>Select a 3D ligand file in .mol2 format. </p></body></html>"))
@@ -2330,8 +2330,8 @@ class Ui_MainWindo(object):
         out_pdb2gmx = os.system(cmd)
 
         if out_pdb2gmx == 0:
-          bx = str(self.bx_menu.currentText())
-          dst = str(self.dist.text())
+          bx = str(self.comboBox_5.currentText())
+          dst = str(self.sel_dist.text())
           if gromacs_flag('mdrun'):
             cmd1 = 'editconf -bt {0} -f trp.pdb -o trpb4solv.pdb -d {1}'.format(bx, dst)
           elif gromacs_flag('gmx'):
@@ -4697,7 +4697,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
             plt.show()
             data0 = ('min = ' + str(min) + '\nmax = ' + str(max) + '\nmean =' + str(mean))
             text0 = """
-LiGRO v 1.1 - Output of {0}
+LiGRO v 1.1.1 - Output of {0}
 ---------------------------------------------
             """.format(analysis)
             try:
@@ -4824,7 +4824,7 @@ LiGRO v 1.1 - Output of {0}
             '\t\nRgymean =' + str(g3mean) + '\t\nRgzmin = ' + str(g4min) + '\t\nRgzmax = ' + str(g4max) + '\t\nRgzmean =' + str(
                 g4mean))
             text = """
-LiGRO v 1.1 - Output of {0}
+LiGRO v 1.1.1 - Output of {0}
 ---------------------------------------------
             """.format(analysis)
             try:
@@ -4885,7 +4885,7 @@ LiGRO v 1.1 - Output of {0}
             plt.show()
             data0 = ('min = ' + str(min) + '\nmax = ' + str(max) + '\nmean =' + str(mean))
             text0 = """
-LiGRO v 1.1 - Output of {0}
+LiGRO v 1.1.1 - Output of {0}
 ---------------------------------------------
             """.format(analysis)
             try:
@@ -4995,7 +4995,7 @@ LiGRO v 1.1 - Output of {0}
 
             try:
               with open('out.txt') as infile, QFileDialog.getSaveFileName(self,"Save LJSR-CoulSR IE txt", os.path.join(path2+'ligro_LJSR-CoulSR_IE_out.txt'), 'Text file(*.txt)') as outfile:
-                outfile.write('LiGRO v 1.1\n')
+                outfile.write('LiGRO v 1.1.1\n')
                 outfile.write('Energy                      Average   Err.Est.       RMSD  Tot-Drift\n')
                 copy = False
                 for line in infile:
@@ -5048,7 +5048,7 @@ LiGRO v 1.1 - Output of {0}
         msgBox = QMessageBox()
         msgBox.setWindowTitle('About')
         msgBox.setText('''
-LiGRO - Version 1.1
+LiGRO - Version 1.1.1
 This software is available to you under the terms of the GPL-3. See ~/ligro/LICENCE for more informations. Software is created and maintained by Laboratorio de Sintese Organica Medicinal-LaSOM at Universidade Federal do Rio Grande do Sul.
 
 Contributors:
@@ -5141,7 +5141,7 @@ def gromacs_flag(name):
             return False
     return True
 
-title = 'LiGRO: Version 1.0.1'
+title = 'LiGRO: Version 1.1.1'
 
 def iconFromBase64(base64):
     pixmap = QtGui.QPixmap()
@@ -5593,7 +5593,7 @@ class Ui_MainWindo(object):
 
     def retranslateUi(self, MainWindo):
         _translate = QtCore.QCoreApplication.translate
-        MainWindo.setWindowTitle(_translate("MainWindo", "LiGRO v.1.1"))
+        MainWindo.setWindowTitle(_translate("MainWindo", "LiGRO v.1.1.1"))
         self.groupBox_3.setTitle(_translate("MainWindo", "Select Ligand MOL2 File"))
         self.browse_lig_mol2.setText(_translate("MainWindo", "Browse"))
         self.browse_lig_mol2.setToolTip(_translate("MainWindo", "<html><head/><body><p>Select a 3D ligand file in .mol2 format. </p></body></html>"))
@@ -7404,7 +7404,7 @@ class Ui_MainWindo(object):
         out_pdb2gmx = os.system(cmd)
 
         if out_pdb2gmx == 0:
-          bx = str(self.bx_menu.currentText())
+          bx = str(self.self.comboBox_5.currentText())
           dst = str(self.dist.text())
           if gromacs_flag('mdrun'):
             cmd1 = 'editconf -bt {0} -f trp.pdb -o trpb4solv.pdb -d {1}'.format(bx, dst)
@@ -9769,7 +9769,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
             plt.show()
             data0 = ('min = ' + str(min) + '\nmax = ' + str(max) + '\nmean =' + str(mean))
             text0 = """
-LiGRO v 1.1 - Output of {0}
+LiGRO v 1.1.1 - Output of {0}
 ---------------------------------------------
             """.format(analysis)
             try:
@@ -9896,7 +9896,7 @@ LiGRO v 1.1 - Output of {0}
             '\t\nRgymean =' + str(g3mean) + '\t\nRgzmin = ' + str(g4min) + '\t\nRgzmax = ' + str(g4max) + '\t\nRgzmean =' + str(
                 g4mean))
             text = """
-LiGRO v 1.1 - Output of {0}
+LiGRO v 1.1.1 - Output of {0}
 ---------------------------------------------
             """.format(analysis)
             try:
@@ -9957,7 +9957,7 @@ LiGRO v 1.1 - Output of {0}
             plt.show()
             data0 = ('min = ' + str(min) + '\nmax = ' + str(max) + '\nmean =' + str(mean))
             text0 = """
-LiGRO v 1.1 - Output of {0}
+LiGRO v 1.1.1 - Output of {0}
 ---------------------------------------------
             """.format(analysis)
             try:
@@ -10067,7 +10067,7 @@ LiGRO v 1.1 - Output of {0}
 
             try:
               with open('out.txt') as infile, QFileDialog.getSaveFileName(self,"Save LJSR-CoulSR IE txt", os.path.join(path2+'ligro_LJSR-CoulSR_IE_out.txt'), 'Text file(*.txt)') as outfile:
-                outfile.write('LiGRO v 1.1\n')
+                outfile.write('LiGRO v 1.1.1\n')
                 outfile.write('Energy                      Average   Err.Est.       RMSD  Tot-Drift\n')
                 copy = False
                 for line in infile:
@@ -10120,7 +10120,7 @@ LiGRO v 1.1 - Output of {0}
         msgBox = QMessageBox()
         msgBox.setWindowTitle('About')
         msgBox.setText('''
-LiGRO - Version 1.1
+LiGRO - Version 1.1.1
 This software is available to you under the terms of the GPL-3. See ~/ligro/LICENCE for more informations. Software is created and maintained by Laboratorio de Sintese Organica Medicinal-LaSOM at Universidade Federal do Rio Grande do Sul.
 
 Contributors:
