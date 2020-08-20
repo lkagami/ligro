@@ -3,7 +3,7 @@ from setuptools import setup, find_packages, Extension
 setup(
     name='ligro',
     packages=['ligro'],
-    version='1.1.3',
+    version='1.1.4',
     description='LiGRO: a graphical user interface for protein-ligand molecular dynamics.',
     author="KAGAMI, Luciano Porto",
     author_email='luciano.kagami@ufrgs.br',
