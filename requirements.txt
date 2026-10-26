@@ -1,0 +1,37 @@
+# LiGRO - Python dependencies
+#
+# Install with:
+#     pip install -r requirements.txt
+#
+# Python 3.8 or newer is required: the core uses dataclasses and typing.Protocol.
+# (The old README mentions Python 3.6 for the conda package; that no longer works.)
+#
+# Versions are minimums, not tested pins. Pin exact versions once the
+# environment has been verified on the target machine.
+
+# GUI (kept on PyQt5 by decision)
+PyQt5>=5.15
+
+# Numerics and plotting (matplotlib also provides the `pylab` module)
+numpy>=1.20
+matplotlib>=3.3
+
+# Structure I/O
+biopandas>=0.4
+
+# Simulation building blocks (replaces os.system calls to gmx/grompp/mdrun)
+biobb-common>=4.0
+biobb-gromacs>=4.0
+
+# Protein-ligand interaction analysis
+plip>=2.0
+
+# Ligand parameterization (imported as `acpype_lib` in ligro.py -- verify
+# this module name against the installed acpype version)
+acpype>=2020.0
+
+# NOT installable with pip -- install separately:
+#   GROMACS  (gmx on PATH; biobb calls it)   https://www.gromacs.org
+#   AmberTools (antechamber, parmchk2, tleap) required by ACPYPE
+#   OpenBabel (pulled in by plip/pybel; may need conda or system package)
+#   PyMOL is no longer required once the VisMol viewer is wired in.

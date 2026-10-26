@@ -1,0 +1,2 @@
+include vismol/gui/gtk_widgets/*.glade
+include vismol/libgl/fonts/*ttf
