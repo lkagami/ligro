@@ -84,6 +84,203 @@ class GromacsDetectionTests(unittest.TestCase):
             self.assertFalse(ui.gromacs_flag("gmx"))
 
 
+class LigandTopologyTests(unittest.TestCase):
+    def test_ligand_include_and_molecule_are_added_to_valid_sections(self):
+        with tempfile.TemporaryDirectory() as workdir:
+            protein_top = os.path.join(workdir, "trp.top")
+            ligand_itp = os.path.join(workdir, "Ligand.itp")
+            with open(protein_top, "w", encoding="utf-8") as topology:
+                topology.write(
+                    '#include "amber99sb.ff/forcefield.itp"\n'
+                    '[ moleculetype ]\nProtein_chain_A 3\n'
+                    '[ molecules ]\nProtein_chain_A 1\n'
+                )
+            with open(ligand_itp, "w", encoding="utf-8") as ligand:
+                ligand.write("[ moleculetype ]\nMOL 3\n")
+
+            ui._write_complex_topology(protein_top, ligand_itp, protein_top)
+
+            with open(protein_top, encoding="utf-8") as topology:
+                contents = topology.read()
+            self.assertIn(
+                '#include "amber99sb.ff/forcefield.itp"\n#include "Ligand.itp"\n',
+                contents,
+            )
+            self.assertRegex(contents, r"(?m)^\[ molecules \]\nProtein_chain_A 1\nMOL 1$")
+
+    def test_existing_ligand_molecule_entry_is_not_duplicated(self):
+        with tempfile.TemporaryDirectory() as workdir:
+            protein_top = os.path.join(workdir, "trp.top")
+            ligand_itp = os.path.join(workdir, "Ligand.itp")
+            with open(protein_top, "w", encoding="utf-8") as topology:
+                topology.write(
+                    '#include "amber99sb.ff/forcefield.itp"\n'
+                    '[ molecules ]\nProtein_chain_A 1\nMOL 1\n'
+                )
+            with open(ligand_itp, "w", encoding="utf-8") as ligand:
+                ligand.write("[ moleculetype ]\nMOL 3\n")
+
+            ui._write_complex_topology(protein_top, ligand_itp, protein_top)
+
+            with open(protein_top, encoding="utf-8") as topology:
+                contents = topology.read()
+            self.assertEqual(contents.count("MOL 1"), 1)
+
+    def test_missing_molecules_section_is_reported(self):
+        with tempfile.TemporaryDirectory() as workdir:
+            protein_top = os.path.join(workdir, "trp.top")
+            ligand_itp = os.path.join(workdir, "Ligand.itp")
+            with open(protein_top, "w", encoding="utf-8") as topology:
+                topology.write('#include "amber99sb.ff/forcefield.itp"\n')
+            with open(ligand_itp, "w", encoding="utf-8") as ligand:
+                ligand.write("[ moleculetype ]\nLIG 3\n")
+
+            with self.assertRaisesRegex(ValueError, r"\[ molecules \]"):
+                ui._write_complex_topology(protein_top, ligand_itp, protein_top)
+
+
+class HeredocWriterTests(unittest.TestCase):
+    def test_indented_delimiter_is_not_written_into_mdp_file(self):
+        with tempfile.TemporaryDirectory() as workdir:
+            old_cwd = os.getcwd()
+            try:
+                os.chdir(workdir)
+                status = ui._run_heredoc(
+                    "cat << EOF > em_real.mdp\n"
+                    "integrator = steep\n"
+                    "                EOF\n"
+                )
+                self.assertEqual(status, 0)
+                with open("em_real.mdp", encoding="utf-8") as mdp:
+                    contents = mdp.read()
+                self.assertEqual(contents, "integrator = steep\n")
+            finally:
+                os.chdir(old_cwd)
+
+
+class ViewerTests(unittest.TestCase):
+    def test_dots_representation_sets_vertex_shader_point_size(self):
+        from types import SimpleNamespace
+        from vismol.libgl import representations
+
+        dot_representation = representations.DotsRepresentation.__new__(
+            representations.DotsRepresentation
+        )
+        dot_representation._check_vao_and_vbos = mock.Mock()
+        dot_representation._enable_anti_alias_to_lines = mock.Mock()
+        dot_representation._disable_anti_alias_to_lines = mock.Mock()
+        dot_representation.vm_glcore = SimpleNamespace(
+            vm_config=SimpleNamespace(gl_parameters={"dots_size": 2}),
+            height=420,
+            dist_cam_zrp=10,
+            _get_uniform_location=mock.Mock(return_value=7),
+            load_matrices=mock.Mock(),
+            load_fog=mock.Mock(),
+            load_lights=mock.Mock(),
+        )
+        dot_representation.vm_object = SimpleNamespace(model_mat=object())
+        dot_representation.shader_program = 3
+        dot_representation.vao = 4
+        dot_representation.elements = 1
+        dot_representation.was_rep_coord_modified = False
+        dot_representation.was_rep_ind_modified = False
+        dot_representation.was_col_modified = False
+
+        uniform_upload = mock.Mock()
+        with mock.patch.multiple(
+            representations.GL,
+            glEnable=mock.Mock(),
+            glUseProgram=mock.Mock(),
+            glPointSize=mock.Mock(),
+            glUniform1f=uniform_upload,
+            glBindVertexArray=mock.Mock(),
+            glDrawElements=mock.Mock(),
+            glDisable=mock.Mock(),
+        ):
+            dot_representation.draw_representation()
+
+        uniform_upload.assert_called_once_with(7, 42.0)
+
+    def test_optional_builder_pick_fallback_returns_a_pair(self):
+        from vismol.libgl.vismol_glcore import _OptionalBuilderFallback
+
+        fallback = _OptionalBuilderFallback()
+        self.assertEqual(fallback._read_depth_and_atom_at_pixel(None, 0, 0), (None, None))
+
+    def test_structure_review_loads_the_file_in_vismol(self):
+        class Signal:
+            def connect(self, callback):
+                self.callback = callback
+
+        class Dialog:
+            Accepted = 1
+
+            def __init__(self, _parent):
+                self.buttons = []
+
+            def setWindowTitle(self, _title):
+                pass
+
+            def resize(self, _width, _height):
+                pass
+
+            def setModal(self, _modal):
+                pass
+
+            def show(self):
+                pass
+
+            def accept(self):
+                pass
+
+            def reject(self):
+                pass
+
+            def exec_(self):
+                return self.Accepted
+
+        class Layout:
+            def __init__(self, _dialog):
+                pass
+
+            def addWidget(self, _widget):
+                pass
+
+        class ButtonBox:
+            Ok = 1
+            Cancel = 2
+
+            def __init__(self, _flags, parent):
+                self.accepted = Signal()
+                self.rejected = Signal()
+
+        initialization_order = []
+        qt_widgets = mock.Mock(
+            QDialog=Dialog,
+            QVBoxLayout=Layout,
+            QDialogButtonBox=ButtonBox,
+            QApplication=mock.Mock(
+                processEvents=mock.Mock(
+                    side_effect=lambda: initialization_order.append("events")
+                )
+            ),
+        )
+        viewer = mock.Mock()
+        viewer.load_structure.side_effect = lambda _path: initialization_order.append("load")
+        pyvista = mock.Mock(create_pyvista_viewer=mock.Mock(return_value=viewer))
+        window = ui.Ui_MainWindo.__new__(ui.Ui_MainWindo)
+        structure = os.path.abspath("em.pdb")
+
+        with mock.patch.object(ui, "QtWidgets", qt_widgets), \
+             mock.patch.dict(sys.modules, {"ligro.viewer": pyvista}):
+            self.assertTrue(window._confirm_structure(structure))
+
+        qt_widgets.QApplication.processEvents.assert_called_once_with()
+        viewer.load_structure.assert_called_once_with(os.path.abspath(structure))
+        pyvista.create_pyvista_viewer.assert_called_once_with(mock.ANY)
+        self.assertEqual(initialization_order, ["events", "load"])
+
+
 class GlueTests(unittest.TestCase):
     def setUp(self):
         self.cwd = tempfile.mkdtemp()
@@ -161,6 +358,41 @@ class GlueTests(unittest.TestCase):
         ok = self.run_glue(w)
         self.assertFalse(ok)
         self.assertEqual(self.dialogs[0][0], "Minimization failed")
+
+    def test_run_simulation_copies_all_production_outputs(self):
+        w = self.window()
+        w.sel_proj_name = Widget("trpcage")
+        w.sel_sav_direc = Widget(self.cwd)
+        outputs = {}
+        for key in ("xtc", "edr", "gro", "tpr", "trr", "log", "cpt"):
+            output_path = os.path.join(self.cwd, "md." + key)
+            with open(output_path, "w", encoding="utf-8") as output_file:
+                output_file.write("test")
+            outputs[key] = output_path
+
+        with mock.patch.object(w, "_run_dynamics_pipeline", return_value=outputs), \
+             mock.patch.object(ui, "showdialog", lambda *_args: None):
+            results_path = w.run_simulation()
+
+        self.assertEqual(results_path, os.path.join(self.cwd, "trpcage_results"))
+        for key in outputs:
+            self.assertTrue(
+                os.path.isfile(os.path.join(results_path, "trpcage." + key)),
+                key,
+            )
+
+    def test_run_simulation_reports_missing_production_output(self):
+        w = self.window()
+        w.sel_proj_name = Widget("trpcage")
+        w.sel_sav_direc = Widget(self.cwd)
+        outputs = {key: None for key in ("xtc", "edr", "gro", "tpr", "trr", "log", "cpt")}
+        outputs["xtc"] = os.path.join(self.cwd, "missing.xtc")
+        with mock.patch.object(w, "_run_dynamics_pipeline", return_value=outputs), \
+             mock.patch.object(ui, "showdialog", side_effect=lambda *args: self.dialogs.append(args)):
+            self.assertIsNone(w.run_simulation())
+
+        self.assertEqual(self.dialogs[0][0], "Error")
+        self.assertIn("missing.xtc", self.dialogs[0][1])
 
 
 if __name__ == "__main__":

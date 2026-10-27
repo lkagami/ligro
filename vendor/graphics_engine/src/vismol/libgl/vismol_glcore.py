@@ -83,6 +83,10 @@ logger = getLogger(__name__)
 
 class _OptionalBuilderFallback:
     """No-op fallback for EasyHybrid-only builder hooks in standalone VisMol."""
+
+    def _read_depth_and_atom_at_pixel(self, *_args, **_kwargs):
+        return None, None
+
     def __getattr__(self, _name):
         def _noop(*_args, **_kwargs):
             return False
@@ -1901,8 +1905,11 @@ class VismolGLCore:
     
     def antialias_samples(self):
         """ Number of samples per pixel asked for by the preferences
-            (gl_parameters "antialias" on/off and "antialias_samples"),
-            0 when antialiasing is off. """
+            (gl_parameters "antialias" on/off and "antialias_samples").
+            Qt's QOpenGLWidget owns its framebuffer, so do not redirect it
+            through the GTK-oriented multisample framebuffer path. """
+        if getattr(self.vm_session, "toolkit", None) == "Qt5":
+            return 0
         gl_parameters = self.vm_config.gl_parameters
         if not gl_parameters.get("antialias", True) or self._msaa_failed:
             return 0
@@ -3596,6 +3603,56 @@ class VismolGLCore:
         frame_index = self._get_vismol_object_frame(atom.vm_object)
         self.center_on_coordinates(atom.vm_object, atom.coords(frame_index))
 
+    def fit_to_object(self, vismol_object, margin=1.15, atom_indices=None):
+        """Adjust the camera distance and clipping planes to show an object."""
+        frames = np.asarray(vismol_object.frames)
+        if frames.ndim != 3 or frames.shape[0] == 0 or frames.shape[1] == 0:
+            raise ValueError("Cannot fit the camera to an object without coordinates")
+
+        frame_index = int(getattr(self.vm_session, "frame", 0))
+        frame_index = min(max(frame_index, 0), frames.shape[0] - 1)
+        coordinates = np.asarray(frames[frame_index], dtype=np.float32)
+        if atom_indices is not None:
+            indices = np.asarray(atom_indices, dtype=np.intp)
+            if indices.size == 0:
+                raise ValueError("Cannot fit the camera to an empty atom selection")
+            coordinates = coordinates[indices]
+        if not np.isfinite(coordinates).all():
+            raise ValueError("Cannot fit the camera to non-finite coordinates")
+
+        coordinates_h = np.concatenate(
+            (coordinates, np.ones((len(coordinates), 1), dtype=np.float32)),
+            axis=1,
+        )
+        world_coordinates = coordinates_h @ vismol_object.model_mat
+        radius = float(np.max(np.linalg.norm(world_coordinates[:, :3], axis=1)))
+        if not math.isfinite(radius):
+            raise ValueError("Cannot fit the camera to non-finite coordinates")
+        if radius == 0.0:
+            radius = 1.0
+
+        camera = self.glcamera
+        aspect = float(camera.viewport_aspect_ratio)
+        fov = math.radians(float(camera.field_of_view))
+        half_angle = math.atan(math.tan(fov / 2.0) * min(aspect, 1.0))
+        fit_radius = radius * margin
+        distance = fit_radius / math.sin(half_angle)
+
+        direction = np.asarray(camera.get_position(), dtype=np.float32)
+        direction_length = float(np.linalg.norm(direction))
+        if direction_length == 0.0:
+            direction = np.array([0.0, 0.0, 1.0], dtype=np.float32)
+        else:
+            direction /= direction_length
+
+        camera.set_view_matrix(camera._get_view_matrix(direction * distance))
+        camera.z_near = max(float(camera.min_znear), distance - fit_radius)
+        camera.z_far = distance + fit_radius
+        camera.update_projection()
+        camera.update_fog()
+        self.dist_cam_zrp = distance
+        self.parent_widget.queue_draw()
+
     def center_on_coordinates_new(self, vismol_object, target):
         """
         Smoothly translate all objects so that the target coordinate becomes centered.
@@ -3650,8 +3707,14 @@ class VismolGLCore:
                     win = self.parent_widget.get_window()
                     win.invalidate_rect(None, False)
                     win.process_updates(False)
+                elif self.vm_session.toolkit == "Qt5":
+                    self.parent_widget.process_updates()
                 else:
-                    raise RuntimeError("Not implemented for Qt5 yet")
+                    raise RuntimeError(
+                        "Centering is not implemented for toolkit {!r}".format(
+                            self.vm_session.toolkit
+                        )
+                    )
 
                 time.sleep(self.vm_config.gl_parameters["center_on_coord_sleep_time"])
 
@@ -3701,9 +3764,13 @@ class VismolGLCore:
                     self.parent_widget.get_window().invalidate_rect(None, False)
                     self.parent_widget.get_window().process_updates(False)
                 elif self.vm_session.toolkit == "Qt5":
-                    logger.critical("Not implemented for Qt5 yet :(")
-                    raise RuntimeError("Not implemented for Qt5 yet :(")
-                # WARNING: Method only works with GTK!!!
+                    self.parent_widget.process_updates()
+                else:
+                    raise RuntimeError(
+                        "Centering is not implemented for toolkit {!r}".format(
+                            self.vm_session.toolkit
+                        )
+                    )
                 time.sleep(self.vm_config.gl_parameters["center_on_coord_sleep_time"])
             
             for index, vm_object in self.vm_session.vm_objects_dic.items():

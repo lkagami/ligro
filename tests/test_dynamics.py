@@ -22,6 +22,9 @@ class RecordingRunner:
         for suffix in (".gro", ".edr", ".log", ".trr"):
             with open(deffnm + suffix, "w", encoding="utf-8") as fh:
                 fh.write("fake output")
+        if write_cpt:
+            with open(deffnm + ".cpt", "w", encoding="utf-8") as fh:
+                fh.write("fake checkpoint")
         if write_xtc:
             with open(deffnm + ".xtc", "w", encoding="utf-8") as fh:
                 fh.write("fake trajectory")
@@ -49,6 +52,8 @@ class DynamicsTests(unittest.TestCase):
             ("grompp", "md.tpr"), ("mdrun", "md"),
         ])
         self.assertTrue(os.path.isfile(result["xtc"]))
+        for key in ("gro", "edr", "trr", "log", "cpt"):
+            self.assertTrue(os.path.isfile(result[key]), key)
         with zipfile.ZipFile(os.path.join(self.wd, "trp_runtime.zip")) as z:
             self.assertIn("p2g.top", z.namelist())
             self.assertIn("amber99sb-ildn.ff/forcefield.itp", z.namelist())

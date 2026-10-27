@@ -375,8 +375,9 @@ class VismolObject:
         """
         # Create a DotsRepresentation object and add it to the 'representations' dictionary
         if rep_type == "dots":
+            dot_indexes = list(self.atoms.keys()) if indexes is None else indexes
             self.representations["dots"] = DotsRepresentation(self, self.vm_session.vm_glcore,
-                                                active=True, indexes=list(self.atoms.keys()))
+                                                active=True, indexes=dot_indexes)
         elif rep_type == "lines":
             # Create a LinesRepresentation object and add it to the 'representations' dictionary
             # Usa apenas ligacoes covalentes; as metalicas viram pontilhado.

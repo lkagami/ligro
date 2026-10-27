@@ -11,6 +11,8 @@
 
 # GUI (kept on PyQt5 by decision)
 PyQt5>=5.15
+pyvista>=0.44
+pyvistaqt>=0.11
 
 # Numerics and plotting (matplotlib also provides the `pylab` module)
 numpy>=1.20
@@ -34,4 +36,4 @@ acpype>=2020.0
 #   GROMACS  (gmx on PATH; biobb calls it)   https://www.gromacs.org
 #   AmberTools (antechamber, parmchk2, tleap) required by ACPYPE
 #   OpenBabel (pulled in by plip/pybel; may need conda or system package)
-#   PyMOL is no longer required once the VisMol viewer is wired in.
+#   Molecular visualization is provided by PyVista + pyvistaqt.

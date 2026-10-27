@@ -1,7 +1,7 @@
 # vismol.toml
 
 [build-system]
-requires = ["setuptools>=40.0"]
+requires = ["setuptools>=64.0", "numpy>=1.20.0", "Cython>=0.29.12"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -17,7 +17,9 @@ license = { file = "LICENSE" }
 dependencies = [
     "numpy>=1.20.0",
     "Cython>=0.29.12",
-    "PyOpenGL>=3.1.0"
+    "PyOpenGL>=3.1.0",
+    "PyQt5>=5.15",
+    "freetype-py>=2.4.0"
 ]
 requires-python = ">=3.7"
 classifiers = [

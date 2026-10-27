@@ -35,21 +35,8 @@ extensions = [
     #          include_dirs=[np.get_include()]),
 ]
 
-with open("LICENSE", "r") as f:
-    license = f.read()
-
 setup(
-    name="vismol",
-    version=__import__("src").__version__,
-    description="Python molecular viewer library",
-    url="https://github.com/casebor/graphics_engines",
-    project_urls={
-        "Source": "https://github.com/casebor/graphics_engines"
-        },
     python_requires=">=3.7",
-    author=__import__("src").__author__,
-    author_email=__import__("src").__mail__,
-    license=license,
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     package_data={
@@ -59,12 +46,6 @@ setup(
         # "libgl": ["fonts/*.ttf"],
     },
     scripts=["scripts/vismol_simple.py"],
-    install_requires=[
-        "numpy>=1.20.0",
-        "Cython>=0.29.12",
-        "PyOpenGL>=3.1.0",
-        "PyQt5>=5.15"
-        ],
     classifiers = [
         "Programming Language :: Python :: 3",
         "License :: Creative Commons Attribution-NonCommercial 4.0",

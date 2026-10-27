@@ -78,7 +78,7 @@ class MolecularDynamics:
             call("md_mdrun", lambda: runner.mdrun(
                 md_tpr, os.path.join(workdir, "md"), write_xtc=p.trajectory,
                 write_cpt=True))
-            for name in ("md.gro", "md.edr"):
+            for name in ("md.gro", "md.edr", "md.trr", "md.log", "md.cpt"):
                 self._require(os.path.join(workdir, name), "production MD output")
             if p.trajectory:
                 self._require(os.path.join(workdir, "md.xtc"), "production trajectory")
@@ -88,4 +88,7 @@ class MolecularDynamics:
             "gro": os.path.join(workdir, "md.gro") if p.run_production else None,
             "edr": os.path.join(workdir, "md.edr") if p.run_production else None,
             "xtc": os.path.join(workdir, "md.xtc") if p.run_production and p.trajectory else None,
+            "trr": os.path.join(workdir, "md.trr") if p.run_production else None,
+            "log": os.path.join(workdir, "md.log") if p.run_production else None,
+            "cpt": os.path.join(workdir, "md.cpt") if p.run_production else None,
         }

@@ -62,20 +62,28 @@ cpdef _get_frame_coords(frames, atom_qtty):
     cdef int i = 0
     cdef int j = 0
     coords = np.empty([len(frames), atom_qtty, 3], dtype=np.float32)
-    print(coords)
     for frame in frames:
         j = 0
         lines = frame.strip().split("\n")
         for line in lines:
             if line[:4] == "ATOM" or line[:6] == "HETATM":
+                if j >= atom_qtty:
+                    raise ValueError(
+                        "PDB frame {} has more atom records than its topology "
+                        "({})".format(i + 1, atom_qtty)
+                    )
                 x = np.float32(line[30:38])
                 y = np.float32(line[38:46])
                 z = np.float32(line[46:54])
                 coords[i,j,:] = x, y, z
                 j += 1
+        if j != atom_qtty:
+            raise ValueError(
+                "PDB frame {} contains {} atom records; expected {}".format(
+                    i + 1, j, atom_qtty
+                )
+            )
         i += 1
-    print("_get_frame_coords(frames, atom_qtty)")
-    print(coords)
     return coords
 
 cpdef _get_ranges(traj_size, batch_size):

@@ -26,6 +26,10 @@ from os import fdopen, remove
 import time
 import zlib, base64
 import errno
+
+if __package__ in (None, ''):
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 try:
     from importlib.metadata import version as _pkg_version
     plipver = _pkg_version("plip")
@@ -70,6 +74,78 @@ def gromacs_flag(name):
         return result.returncode == 0
     except (OSError, subprocess.SubprocessError):
         return False
+
+
+def _write_complex_topology(protein_top, ligand_itp, output_top):
+    if not os.path.isfile(ligand_itp):
+        raise FileNotFoundError("Ligand topology file not found: {}".format(ligand_itp))
+
+    with open(ligand_itp, encoding="utf-8") as ligand_file:
+        ligand_contents = ligand_file.read()
+    molecule_section = re.search(
+        r"(?ims)^[ \t]*\[[ \t]*moleculetype[ \t]*\][^\n]*\n(.*?)(?=^[ \t]*\[|\Z)",
+        ligand_contents,
+    )
+    if molecule_section is None:
+        raise ValueError("The ligand topology has no [ moleculetype ] section.")
+    molecule_name = next(
+        (
+            line.split()[0]
+            for line in molecule_section.group(1).splitlines()
+            if line.strip() and not line.lstrip().startswith(";")
+        ),
+        None,
+    )
+    if molecule_name is None:
+        raise ValueError("The ligand [ moleculetype ] section has no molecule name.")
+
+    with open(protein_top, encoding="utf-8") as topology_file:
+        topology = topology_file.read()
+
+    forcefield_include = re.search(
+        r'(?m)^([ \t]*#include[ \t]+["<][^">]*forcefield\.itp[">][^\n]*\n?)',
+        topology,
+    )
+    if forcefield_include is None:
+        raise ValueError("The protein topology has no forcefield.itp include.")
+
+    ligand_include = '#include "Ligand.itp"'
+    if ligand_include not in topology:
+        insert_at = forcefield_include.end()
+        topology = topology[:insert_at] + ligand_include + "\n" + topology[insert_at:]
+
+    molecules_section = re.search(r"(?im)^[ \t]*\[[ \t]*molecules[ \t]*\][^\n]*\n", topology)
+    if molecules_section is None:
+        raise ValueError("The protein topology has no [ molecules ] section.")
+
+    section_start = molecules_section.end()
+    next_section = re.search(r"(?m)^[ \t]*\[", topology[section_start:])
+    section_end = (
+        section_start + next_section.start()
+        if next_section is not None
+        else len(topology)
+    )
+    molecule_rows = topology[section_start:section_end]
+    molecule_row = re.compile(
+        r"(?im)^[ \t]*{}[ \t]+1(?:[ \t;]|$)".format(re.escape(molecule_name))
+    )
+    if not molecule_row.search(molecule_rows):
+        separator = "" if not molecule_rows or molecule_rows.endswith("\n") else "\n"
+        topology = (
+            topology[:section_end]
+            + separator
+            + "{} 1\n".format(molecule_name)
+            + topology[section_end:]
+        )
+
+    with open(output_top, "w", encoding="utf-8") as topology_file:
+        topology_file.write(topology)
+
+
+def _run_heredoc(command):
+    command = re.sub(r"(?m)^[ \t]+EOF[ \t]*$", "EOF", command)
+    return os.system(command)
+
 
 title = 'LiGRO: Version 1.1.4'
 
@@ -904,17 +980,17 @@ class Ui_MainWindo(object):
           if acp == 0:
             os.system('grep -h ATOM trp.pdb Ligand.acpype/Ligand_NEW.pdb > complex.pdb')
 
-            if ff != 'oplsaa':
-                os.system('cp Ligand.acpype/Ligand_GMX.itp Ligand.itp')
-            else:
-                os.system('cp Ligand.acpype/Ligand_GMX_OPLS.itp Ligand.itp')
-
-            os.system('cp trp.top Complex.top')
-            os.system("cat Complex.top | sed '/forcefield\\.itp\"/a\
-                       #include \"Ligand.itp\" ' >| Complex2.top")
-
-            os.system('echo "Ligand              1" >> Complex2.top')
-            os.system('mv Complex2.top trp.top')
+            ligand_topology = (
+                'Ligand.acpype/Ligand_GMX_OPLS.itp'
+                if ff == 'oplsaa'
+                else 'Ligand.acpype/Ligand_GMX.itp'
+            )
+            try:
+                shutil.copy2(ligand_topology, 'Ligand.itp')
+                _write_complex_topology('trp.top', 'Ligand.itp', 'trp.top')
+            except (OSError, ValueError) as exc:
+                showdialog('Topology error', 'Could not assemble the protein-ligand topology: {}'.format(exc))
+                return
             bx = str(self.comboBox_5.currentText())
             dst = str(self.sel_dist.text())
             if gromacs_flag('mdrun'):
@@ -950,9 +1026,15 @@ class Ui_MainWindo(object):
                         pbc             = xyz       ; Periodic Boundary Conditions
                         ''')
             if gromacs_flag('mdrun'):
-              os.system('grompp -f em.mdp -c trpb4ion.pdb -p trp.top -o ion.tpr -maxwarn 1000')
+              grompp_status = os.system('grompp -f em.mdp -c trpb4ion.pdb -p trp.top -o ion.tpr -maxwarn 1000')
             elif gromacs_flag('gmx'):
-              os.system('gmx grompp -f em.mdp -c trpb4ion.pdb -p trp.top -o ion.tpr -maxwarn 1000')
+              grompp_status = os.system('gmx grompp -f em.mdp -c trpb4ion.pdb -p trp.top -o ion.tpr -maxwarn 1000')
+            else:
+              showdialog('GROMACS error', 'GROMACS was not found. Please install it and try again.')
+              return
+            if grompp_status != 0:
+              showdialog('GROMACS error', 'Could not prepare the solvated system for ionization. See the terminal output for details.')
+              return
 
             if self.sel_ioniz.currentText() == 'Na (Number)':
                 c_ion = '-np ' + self.sel_conc.text()
@@ -965,7 +1047,9 @@ class Ui_MainWindo(object):
             elif gromacs_flag('gmx'):
               cmd2 = 'echo SOL|gmx genion -s ion.tpr -o trpb4em.pdb -neutral {} -p trp.top'.format(c_ion)
 
-            os.system(cmd2)
+            if os.system(cmd2) != 0:
+              showdialog('GROMACS error', 'Ion placement failed. See the terminal output for details.')
+              return
 
             inte = self.sel_min_alg.currentText()
 
@@ -1067,10 +1151,15 @@ class Ui_MainWindo(object):
               pass
 
             if inte == 'SD Algorithm':
-                os.system(cmd3)
+                _run_heredoc(cmd3)
                 if gromacs_flag('mdrun'):
-                  os.system('grompp -f em_real.mdp -c trpb4em.pdb -p trp.top -o em.tpr -maxwarn 1000')
-                  os.system('mdrun -v -deffnm em')
+                  minimize_grompp_status = os.system('grompp -f em_real.mdp -c trpb4em.pdb -p trp.top -o em.tpr -maxwarn 1000')
+                  if minimize_grompp_status != 0:
+                    showdialog('GROMACS error', 'Could not prepare energy minimization. See the terminal output for details.')
+                    return
+                  if os.system('mdrun -v -deffnm em') != 0:
+                    showdialog('GROMACS error', 'Energy minimization failed. See the terminal output for details.')
+                    return
                   os.system('''
                   make_ndx -f em.gro -o index2.ndx << EOF
                   "Protein" | "Other"
@@ -1092,8 +1181,13 @@ class Ui_MainWindo(object):
                   os.system('''
                           mv em_2.pdb em.pdb ''')
                 elif gromacs_flag('gmx'):
-                  os.system('gmx grompp -f em_real.mdp -c trpb4em.pdb -p trp.top -o em.tpr -maxwarn 1000')
-                  os.system('gmx mdrun -v -deffnm em')
+                  minimize_grompp_status = os.system('gmx grompp -f em_real.mdp -c trpb4em.pdb -p trp.top -o em.tpr -maxwarn 1000')
+                  if minimize_grompp_status != 0:
+                    showdialog('GROMACS error', 'Could not prepare energy minimization. See the terminal output for details.')
+                    return
+                  if os.system('gmx mdrun -v -deffnm em') != 0:
+                    showdialog('GROMACS error', 'Energy minimization failed. See the terminal output for details.')
+                    return
                   os.system('''
                   gmx make_ndx -f em.gro -o index2.ndx << EOF
                   "Protein" | "Other"
@@ -1117,10 +1211,10 @@ class Ui_MainWindo(object):
 
             else:
               if gromacs_flag('mdrun'):
-                os.system(cmd3)
+                _run_heredoc(cmd3)
                 os.system('grompp -f em_real.mdp -c trpb4em.pdb -p trp.top -o em.tpr -maxwarn 1000')
                 os.system('mdrun -v -deffnm em')
-                os.system(cmd4)
+                _run_heredoc(cmd4)
                 os.system('grompp -f em_real.mdp -c em.gro -p trp.top -o em.tpr -maxwarn 1000')
                 os.system('mdrun -v -deffnm em')
                 os.system('''
@@ -1144,10 +1238,10 @@ class Ui_MainWindo(object):
                 os.system('mv em_2.pdb em.pdb')
 
               elif gromacs_flag('gmx'):
-                os.system(cmd3)
+                _run_heredoc(cmd3)
                 os.system('gmx grompp -f em_real.mdp -c trpb4em.pdb -p trp.top -o em.tpr -maxwarn 1000')
                 os.system('gmx mdrun -v -deffnm em')
-                os.system(cmd4)
+                _run_heredoc(cmd4)
                 os.system('gmx grompp -f em_real.mdp -c em.gro -p trp.top -o em.tpr -maxwarn 1000')
                 os.system('gmx mdrun -v -deffnm em')
                 os.system('''
@@ -1277,7 +1371,7 @@ class Ui_MainWindo(object):
             else:
               pass
 
-            os.system(cmd5)
+            _run_heredoc(cmd5)
 
             if gromacs_flag('mdrun'):
               cmd6 = '''
@@ -1386,7 +1480,7 @@ class Ui_MainWindo(object):
             else:
               pass
 
-            os.system(cmd6)
+            _run_heredoc(cmd6)
 
 
             if gromacs_flag('mdrun'):
@@ -1495,16 +1589,9 @@ class Ui_MainWindo(object):
             else:
               pass
 
-            os.system(cmd7)
+            _run_heredoc(cmd7)
 
-            cmd8='pymol em.pdb'
-
-            os.system(cmd8)
-
-            reply = QMessageBox.question(None, 'View Complex','Is complex OK?', QMessageBox.Yes, QMessageBox.No)
-            if reply == QMessageBox.Yes:
-                pass
-            else:
+            if not self._confirm_structure('em.pdb'):
                 showdialog('No', 'Process has been cancelled')
                 quit()
 
@@ -2265,14 +2352,7 @@ class Ui_MainWindo(object):
 
               os.system(cmd7)
 
-              cmd8='pymol em.pdb'
-
-              os.system(cmd8)
-
-              reply = QMessageBox.question(None, 'View Complex','Is complex OK?', QMessageBox.Yes, QMessageBox.No)
-              if reply == QMessageBox.Yes:
-                pass
-              else:
+              if not self._confirm_structure('em.pdb'):
                 showdialog('No', 'Process has been cancelled')
                 quit()
 
@@ -2678,14 +2758,7 @@ class Ui_MainWindo(object):
 
           os.system(cmd7)
 
-          cmd8='pymol em.pdb'
-
-          os.system(cmd8)
-
-          reply = QMessageBox.question(None, 'View Complex','Is complex OK?', QMessageBox.Yes, QMessageBox.No)
-          if reply == QMessageBox.Yes:
-            pass
-          else:
+          if not self._confirm_structure('em.pdb'):
             showdialog('No', 'Process has been cancelled')
             quit()
 
@@ -3376,14 +3449,7 @@ class Ui_MainWindo(object):
 
             os.system(cmd7)
 
-            cmd8='pymol em.pdb'
-
-            os.system(cmd8)
-
-            reply = QMessageBox.question(None, 'View Complex','Is complex OK?', QMessageBox.Yes, QMessageBox.No)
-            if reply == QMessageBox.Yes:
-                pass
-            else:
+            if not self._confirm_structure('em.pdb'):
                 showdialog('No', 'Process has been cancelled')
                 quit()
 
@@ -4055,14 +4121,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
 
           os.system(cmd7)
 
-          cmd8='pymol eml.pdb'
-
-          os.system(cmd8)
-
-          reply = QMessageBox.question(None, 'View Complex','Is complex OK?', QMessageBox.Yes, QMessageBox.No)
-          if reply == QMessageBox.Yes:
-            pass
-          else:
+          if not self._confirm_structure('eml.pdb'):
             showdialog('No', 'Process has been cancelled')
             quit()
 
@@ -4188,6 +4247,34 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
         self.lie_val.setText(str(y))
 
 
+    def _confirm_structure(self, structure_path):
+        try:
+            from ligro.viewer import create_pyvista_viewer
+
+            dialog = QtWidgets.QDialog(getattr(self, "centralwidget", None))
+            dialog.setWindowTitle("Review structure")
+            dialog.resize(900, 700)
+            layout = QtWidgets.QVBoxLayout(dialog)
+            viewer = create_pyvista_viewer(dialog)
+            layout.addWidget(viewer)
+
+            buttons = QtWidgets.QDialogButtonBox(
+                QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel,
+                parent=dialog,
+            )
+            buttons.accepted.connect(dialog.accept)
+            buttons.rejected.connect(dialog.reject)
+            layout.addWidget(buttons)
+            dialog.setModal(True)
+            dialog.show()
+            QtWidgets.QApplication.processEvents()
+            viewer.load_structure(os.path.abspath(structure_path))
+        except (ImportError, OSError, RuntimeError, ValueError) as error:
+            showdialog("Viewer error", str(error))
+            return False
+
+        return dialog.exec_() == QtWidgets.QDialog.Accepted
+
     def _run_dynamics_pipeline(self, run_production):
         """Run NVT/NPT/MD through BioExcel Building Blocks only."""
         try:
@@ -4224,10 +4311,17 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
         os.makedirs(results_path, exist_ok=True)
         try:
             for key, suffix in (("xtc", ".xtc"), ("edr", ".edr"),
-                                ("gro", ".gro"), ("tpr", ".tpr")):
+                                ("gro", ".gro"), ("tpr", ".tpr"),
+                                ("trr", ".trr"), ("log", ".log"),
+                                ("cpt", ".cpt")):
                 source = result.get(key)
-                if source and os.path.isfile(source):
-                    shutil.copy2(source, os.path.join(results_path, pj + suffix))
+                if not source or not os.path.isfile(source):
+                    raise FileNotFoundError(
+                        "Expected simulation output was not created: {}".format(
+                            source or key + suffix
+                        )
+                    )
+                shutil.copy2(source, os.path.join(results_path, pj + suffix))
             showdialog("Finish", "Job has finished")
             return results_path
         except OSError as error:

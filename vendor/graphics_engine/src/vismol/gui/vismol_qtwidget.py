@@ -6,11 +6,39 @@ current.
 """
 from __future__ import annotations
 
-from PyQt5 import QtCore, QtGui
+import logging
+import traceback
+
+from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QOpenGLWidget
 
 from vismol.libgl.vismol_glcore import VismolGLCore
+
+logger = logging.getLogger(__name__)
+
+
+def _patch_gl_line_width():
+    from OpenGL import GL
+
+    if getattr(GL.glLineWidth, "_vismol_patched", False):
+        return
+
+    original_gl_line_width = GL.glLineWidth
+
+    def clamped_gl_line_width(width):
+        try:
+            low, high = GL.glGetFloatv(GL.GL_ALIASED_LINE_WIDTH_RANGE)
+            flags = GL.glGetIntegerv(GL.GL_CONTEXT_FLAGS)
+            if int(flags) & GL.GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT:
+                high = min(high, 1.0)
+            width = min(max(float(width), float(low)), float(high))
+        except Exception:
+            pass
+        return original_gl_line_width(width)
+
+    clamped_gl_line_width._vismol_patched = True
+    GL.glLineWidth = clamped_gl_line_width
 
 
 class VismolQtWidget(QOpenGLWidget):
@@ -30,17 +58,25 @@ class VismolQtWidget(QOpenGLWidget):
         self.setMinimumSize(320, 240)
         self.setFocusPolicy(Qt.StrongFocus)
         self.setMouseTracking(True)
+        _patch_gl_line_width()
         self.vm_session = vismol_session
         self.vm_glcore = VismolGLCore(self, vismol_session, width, height)
         self.selection_box_frame = None
         self.glmenu_bg = self.glmenu_sele = self.glmenu_obj = self.glmenu_pick = None
         self.filechooser = None
         self._gl_initialized = False
+        self._render_failed = False
         self._last_mouse_pos = QtCore.QPoint()
 
     # Compatibility methods expected by VismolGLCore.
     def queue_draw(self):
         self.update()
+
+    def process_updates(self):
+        self.update()
+        application = QtWidgets.QApplication.instance()
+        if application is not None:
+            application.processEvents()
 
     def set_has_depth_buffer(self, *_args, **_kwargs):
         # Qt's QSurfaceFormat requests a depth buffer before context creation.
@@ -70,11 +106,16 @@ class VismolQtWidget(QOpenGLWidget):
             self.vm_glcore.resize_window(max(1, width), max(1, height))
 
     def paintGL(self):
-        if self._gl_initialized:
+        if self._gl_initialized and not self._render_failed:
             try:
                 self.vm_glcore.render()
             except Exception as exc:
-                self.viewer_error.emit(f"VisMol rendering failed: {exc}")
+                self._render_failed = True
+                error_details = traceback.format_exc()
+                logger.error("VisMol rendering failed:\n%s", error_details)
+                self.viewer_error.emit(
+                    "VisMol rendering failed: {}\n\n{}".format(exc, error_details)
+                )
 
     def load_structure(self, path, **kwargs):
         if self.vm_session is None:
