@@ -35,5 +35,6 @@ acpype>=2020.0
 # NOT installable with pip -- install separately:
 #   GROMACS  (gmx on PATH; biobb calls it)   https://www.gromacs.org
 #   AmberTools (antechamber, parmchk2, tleap) required by ACPYPE
-#   OpenBabel (pulled in by plip/pybel; may need conda or system package)
+#   OpenBabel (obabel; required to prepare downloaded PDB ligands as MOL2)
+#     https://openbabel.org/
 #   Molecular visualization is provided by PyVista + pyvistaqt.

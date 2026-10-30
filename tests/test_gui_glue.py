@@ -159,6 +159,22 @@ class HeredocWriterTests(unittest.TestCase):
 
 
 class ViewerTests(unittest.TestCase):
+    def test_qt_default_context_requests_desktop_opengl_32(self):
+        surface_format = mock.Mock()
+        surface_format_type = mock.Mock(return_value=surface_format)
+        surface_format_type.OpenGL = 1
+        surface_format_type.CoreProfile = 2
+        qt_gui = mock.Mock(QSurfaceFormat=surface_format_type)
+
+        with mock.patch.object(ui, "QtGui", qt_gui):
+            ui._configure_qt_opengl()
+
+        surface_format.setRenderableType.assert_called_once_with(1)
+        surface_format.setProfile.assert_called_once_with(2)
+        surface_format.setVersion.assert_called_once_with(3, 2)
+        surface_format.setDepthBufferSize.assert_called_once_with(8)
+        surface_format_type.setDefaultFormat.assert_called_once_with(surface_format)
+
     def test_dots_representation_sets_vertex_shader_point_size(self):
         from types import SimpleNamespace
         from vismol.libgl import representations
@@ -207,78 +223,101 @@ class ViewerTests(unittest.TestCase):
         fallback = _OptionalBuilderFallback()
         self.assertEqual(fallback._read_depth_and_atom_at_pixel(None, 0, 0), (None, None))
 
-    def test_structure_review_loads_the_file_in_vismol(self):
-        class Signal:
-            def connect(self, callback):
-                self.callback = callback
-
-        class Dialog:
-            Accepted = 1
-
-            def __init__(self, _parent):
-                self.buttons = []
-
-            def setWindowTitle(self, _title):
-                pass
-
-            def resize(self, _width, _height):
-                pass
-
-            def setModal(self, _modal):
-                pass
-
-            def show(self):
-                pass
-
-            def accept(self):
-                pass
-
-            def reject(self):
-                pass
-
-            def exec_(self):
-                return self.Accepted
-
-        class Layout:
-            def __init__(self, _dialog):
-                pass
-
-            def addWidget(self, _widget):
-                pass
-
-        class ButtonBox:
-            Ok = 1
-            Cancel = 2
-
-            def __init__(self, _flags, parent):
-                self.accepted = Signal()
-                self.rejected = Signal()
-
+    def test_structure_review_loads_the_file_in_the_main_window(self):
         initialization_order = []
-        qt_widgets = mock.Mock(
-            QDialog=Dialog,
-            QVBoxLayout=Layout,
-            QDialogButtonBox=ButtonBox,
-            QApplication=mock.Mock(
-                processEvents=mock.Mock(
-                    side_effect=lambda: initialization_order.append("events")
-                )
-            ),
-        )
+        qt_widgets = mock.Mock(QApplication=mock.Mock(
+            processEvents=mock.Mock(
+                side_effect=lambda *_args: initialization_order.append("events")
+            )
+        ))
+        event_loop = mock.Mock()
+        event_loop.exec_.side_effect = lambda: window._continue_structure_review()
         viewer = mock.Mock()
         viewer.load_structure.side_effect = lambda _path: initialization_order.append("load")
         pyvista = mock.Mock(create_pyvista_viewer=mock.Mock(return_value=viewer))
         window = ui.Ui_MainWindo.__new__(ui.Ui_MainWindo)
         structure = os.path.abspath("em.pdb")
+        window.viewer_layout = mock.Mock()
+        window.viewer_container = mock.Mock()
+        window.viewer_placeholder = mock.Mock()
+        window.structure_viewer = None
+        window.monitor_tab = mock.Mock()
+        window.tabWidget = mock.Mock()
+        window.tabWidget.indexOf.return_value = 5
+        window.centralwidget = mock.Mock()
+        window.process_log = mock.Mock()
+        window.structure_review_controls = mock.Mock()
+        window._structure_review_loop = None
+        window._structure_review_result = False
+        window._structure_review_cancelled = False
 
         with mock.patch.object(ui, "QtWidgets", qt_widgets), \
+             mock.patch.object(ui.QtCore, "QEventLoop", return_value=event_loop), \
              mock.patch.dict(sys.modules, {"ligro.viewer": pyvista}):
-            self.assertTrue(window._confirm_structure(structure))
+            self.assertTrue(window._confirm_structure(structure, "complex.pdb"))
 
-        qt_widgets.QApplication.processEvents.assert_called_once_with()
+        self.assertEqual(qt_widgets.QApplication.processEvents.call_count, 3)
         viewer.load_structure.assert_called_once_with(os.path.abspath(structure))
-        pyvista.create_pyvista_viewer.assert_called_once_with(mock.ANY)
-        self.assertEqual(initialization_order, ["events", "load"])
+        pyvista.create_pyvista_viewer.assert_called_once_with(window.viewer_container)
+        window.tabWidget.setCurrentIndex.assert_called_once_with(5)
+        window.viewer_layout.addWidget.assert_called_once_with(viewer)
+        self.assertEqual(
+            initialization_order, ["events", "load", "events", "events"]
+        )
+        event_loop.exec_.assert_called_once_with()
+        event_loop.quit.assert_called_once_with()
+        self.assertEqual(window.structure_review_controls.hide.call_count, 2)
+
+    def test_restore_reloads_original_structure_and_stops_pipeline(self):
+        qt_widgets = mock.Mock(QApplication=mock.Mock(processEvents=mock.Mock()))
+        event_loop = mock.Mock()
+        viewer = mock.Mock()
+        window = ui.Ui_MainWindo.__new__(ui.Ui_MainWindo)
+        window.viewer_layout = mock.Mock()
+        window.viewer_container = mock.Mock()
+        window.viewer_placeholder = mock.Mock()
+        window.structure_viewer = None
+        window.monitor_tab = mock.Mock()
+        window.tabWidget = mock.Mock()
+        window.tabWidget.indexOf.return_value = 5
+        window.centralwidget = mock.Mock()
+        window.process_log = mock.Mock()
+        window.structure_review_controls = mock.Mock()
+        window._structure_review_loop = None
+        window._structure_review_result = False
+        window._structure_review_cancelled = False
+
+        with mock.patch.object(ui, "QtWidgets", qt_widgets), \
+             mock.patch.object(ui.QtCore, "QEventLoop", return_value=event_loop), \
+             mock.patch.dict(
+                 sys.modules,
+                 {"ligro.viewer": mock.Mock(
+                     create_pyvista_viewer=mock.Mock(return_value=viewer)
+                 )},
+             ):
+            event_loop.exec_.side_effect = lambda: window._restore_review_structure()
+            accepted = window._confirm_structure("em.pdb", "complex.pdb")
+
+        self.assertFalse(accepted)
+        self.assertTrue(window._structure_review_cancelled)
+        viewer.load_structure.assert_has_calls([
+            mock.call(os.path.abspath("em.pdb")),
+            mock.call(os.path.abspath("complex.pdb")),
+        ])
+        event_loop.quit.assert_called_once_with()
+        self.assertEqual(window.structure_review_controls.hide.call_count, 2)
+
+    def test_gromacs_log_tail_is_added_to_the_main_window_log(self):
+        window = ui.Ui_MainWindo.__new__(ui.Ui_MainWindo)
+        window.process_log = mock.Mock()
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8") as log_file:
+            log_file.write("GROMACS completed successfully\n")
+            log_file.flush()
+            window._append_process_log_file(log_file.name)
+
+        message = window.process_log.appendPlainText.call_args[0][0]
+        self.assertIn("GROMACS completed successfully", message)
+        self.assertIn("Conteúdo do log GROMACS", message)
 
 
 class GlueTests(unittest.TestCase):
@@ -297,6 +336,10 @@ class GlueTests(unittest.TestCase):
 
     def window(self, min_alg="SD Algorithm", ioniz="Concentration (mol/liter)", conc="0"):
         w = ui.Ui_MainWindo.__new__(ui.Ui_MainWindo)
+        w.tabWidget = mock.Mock()
+        w.monitor_tab = mock.Mock()
+        w.process_log = mock.Mock()
+        w._structure_review_cancelled = False
         w.sel_metal = Widget("None")
         w.sel_ff = Widget("amber99sb-ildn")
         w.sel_water = Widget("tip3p")
@@ -308,6 +351,61 @@ class GlueTests(unittest.TestCase):
         w.sel_min_alg = Widget(min_alg)
         w.sel_min_step = Widget("100")
         return w
+
+    def test_restore_cancellation_does_not_start_md(self):
+        window = self.window()
+        window.sel_proj_name = Widget("project")
+        window.sel_sav_direc = Widget(self.cwd)
+        window.sel_exp_fol = Widget(False)
+        window.mount_simulation_prot = mock.Mock(
+            side_effect=lambda: setattr(window, "_structure_review_cancelled", True)
+        )
+        window.run_simulation = mock.Mock()
+
+        with mock.patch.object(ui.os, "chdir"), \
+             mock.patch.object(
+                 ui.os.path,
+                 "exists",
+                 side_effect=lambda file_path: file_path == "protein.pdb",
+             ), \
+             mock.patch.object(ui, "showdialog"):
+            window.choose_run_simulation()
+
+        window.mount_simulation_prot.assert_called_once_with()
+        window.run_simulation.assert_not_called()
+
+    def test_external_command_output_is_streamed_into_process_log(self):
+        window = self.window()
+
+        with mock.patch.object(ui.QtWidgets.QApplication, "processEvents"):
+            status = window._run_logged_command(
+                "printf 'ACPYPE output\\n'; printf 'GROMACS warning\\n' >&2"
+            )
+
+        self.assertEqual(status, 0)
+        logged_text = "\n".join(
+            call.args[0]
+            for call in window.process_log.appendPlainText.call_args_list
+        )
+        self.assertIn("ACPYPE output", logged_text)
+        self.assertIn("GROMACS warning", logged_text)
+        self.assertIn("Comando finalizado com código 0", logged_text)
+
+    def test_external_command_failure_is_logged_and_preserves_nonzero_status(self):
+        window = self.window()
+
+        with mock.patch.object(ui.QtWidgets.QApplication, "processEvents"):
+            status = window._run_logged_command(
+                "printf 'GROMACS failed\\n'; exit 3"
+            )
+
+        self.assertEqual(status, 3 << 8)
+        logged_text = "\n".join(
+            call.args[0]
+            for call in window.process_log.appendPlainText.call_args_list
+        )
+        self.assertIn("GROMACS failed", logged_text)
+        self.assertIn("código 3", logged_text)
 
     def run_glue(self, window):
         def fake_dialog(title, text):

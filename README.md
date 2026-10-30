@@ -15,6 +15,15 @@ Laboratorio de Sintese Organica Medicinal -LaSOM
 
 Av. Ipiranga, 2752 - Azenha, Porto Alegre - RS, 90610-000 - Brazil
 
+## Prepare a protein-ligand input from a PDB ID
+
+In LiGRO's **Input Files** tab, enter a four-character PDB ID and choose
+**Download / Inspect**. Select the protein chain and ligand residue, then
+choose **Prepare MD inputs**. LiGRO removes non-selected chains and solvent,
+writes `protein.pdb` and converts the selected ligand to `Ligand.mol2`; these
+files are then used by the existing MD workflow. This conversion requires
+Open Babel (`obabel`) on `PATH`.
+
 #### For Antechamber, please cite:
 
 >1.  Wang, J., Wang, W., Kollman P. A.; Case, D. A. "Automatic atom type and bond type perception in molecular mechanical calculations". Journal of Molecular Graphics and Modelling , 25, 2006, 247260.
