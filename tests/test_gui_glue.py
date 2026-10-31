@@ -1,4 +1,4 @@
-"""Tests the glue between ligro.py's widgets and the core pipeline.
+"""Tests the glue between main.py's widgets and the core pipeline.
 
 PyQt5 and the other GUI/analysis imports are replaced by stubs, so the
 window class can be imported without a display. The widgets are fakes with
@@ -23,10 +23,11 @@ for name in ("PyQt5", "PyQt5.QtCore", "PyQt5.QtGui", "PyQt5.QtWidgets",
              "biopandas.mol2", "plip", "plip.modules", "acpype_lib"):
     sys.modules.setdefault(name, mock.MagicMock())
 
-sys.modules["plip.modules"].report.__version__ = "2.4.0"   # read by ligro.py at import
-ui = importlib.import_module("ligro.ligro")
+sys.modules["plip.modules"].report.__version__ = "2.4.0"   # read by main.py at import
+ui = importlib.import_module("ligro.main")
 
 from ligro.core.io.gro import gro_to_pdb  # noqa: E402
+from ligro.core.pipelines.minimization import MARTINI_3_FORCE_FIELD  # noqa: E402
 from ligro.core.runners import FakeRunner  # noqa: E402
 
 GRO_ONE_ATOM = "t\n    1\n    1ALA     CA    1   1.000   1.000   1.000\n   3.00000   3.00000   3.00000\n"
@@ -307,6 +308,52 @@ class ViewerTests(unittest.TestCase):
         event_loop.quit.assert_called_once_with()
         self.assertEqual(window.structure_review_controls.hide.call_count, 2)
 
+    def test_opening_a_local_pdb_displays_it_in_the_viewer(self):
+        window = ui.Ui_MainWindo.__new__(ui.Ui_MainWindo)
+        window.sel_pdb = mock.Mock()
+        window._display_loaded_pdb = mock.Mock()
+        dialog = mock.Mock()
+
+        with tempfile.TemporaryDirectory() as workdir, \
+             mock.patch.object(ui, "path", workdir), \
+             mock.patch.object(ui.QtWidgets, "QFileDialog", return_value=dialog):
+            pdb_path = os.path.join(workdir, "input.pdb")
+            dialog.getOpenFileName.return_value = (pdb_path, "")
+            with open(pdb_path, "w", encoding="ascii") as pdb_file:
+                pdb_file.write("PDB")
+
+            window.openpdbfile()
+
+            window.sel_pdb.setText.assert_called_once_with(pdb_path)
+            window._display_loaded_pdb.assert_called_once_with(pdb_path)
+            self.assertTrue(os.path.isfile(os.path.join(workdir, "protein.pdb")))
+
+    def test_downloading_a_pdb_displays_it_in_the_viewer(self):
+        window = ui.Ui_MainWindo.__new__(ui.Ui_MainWindo)
+        window.pdb_id_input = Widget("1abc")
+        window.pdb_source_path = None
+        window.pdb_chain_combo = mock.Mock()
+        window.pdb_ligand_combo = mock.Mock()
+        window.prepare_pdb_button = mock.Mock()
+        window.pdb_id_status = mock.Mock()
+        window._display_loaded_pdb = mock.Mock()
+        window._append_process_log = mock.Mock()
+        window.update_pdb_ligand_choices = mock.Mock()
+
+        with tempfile.TemporaryDirectory() as workdir, \
+             mock.patch.object(ui, "path", workdir), \
+             mock.patch.object(
+                 ui, "download_pdb", return_value=os.path.join(workdir, "1ABC.pdb")
+             ), \
+             mock.patch.object(
+                 ui, "inspect_pdb", return_value=(["A"], [object()])
+             ):
+            window.download_pdb_by_id()
+
+        window._display_loaded_pdb.assert_called_once_with(
+            os.path.join(workdir, "1ABC.pdb")
+        )
+
     def test_gromacs_log_tail_is_added_to_the_main_window_log(self):
         window = ui.Ui_MainWindo.__new__(ui.Ui_MainWindo)
         window.process_log = mock.Mock()
@@ -317,7 +364,7 @@ class ViewerTests(unittest.TestCase):
 
         message = window.process_log.appendPlainText.call_args[0][0]
         self.assertIn("GROMACS completed successfully", message)
-        self.assertIn("Conteúdo do log GROMACS", message)
+        self.assertIn("GROMACS log contents", message)
 
 
 class GlueTests(unittest.TestCase):
@@ -333,6 +380,7 @@ class GlueTests(unittest.TestCase):
     def tearDown(self):
         os.chdir(self.old_cwd)
         shutil.rmtree(self.cwd)
+
 
     def window(self, min_alg="SD Algorithm", ioniz="Concentration (mol/liter)", conc="0"):
         w = ui.Ui_MainWindo.__new__(ui.Ui_MainWindo)
@@ -389,7 +437,7 @@ class GlueTests(unittest.TestCase):
         )
         self.assertIn("ACPYPE output", logged_text)
         self.assertIn("GROMACS warning", logged_text)
-        self.assertIn("Comando finalizado com código 0", logged_text)
+        self.assertIn("Command finished with exit code 0", logged_text)
 
     def test_external_command_failure_is_logged_and_preserves_nonzero_status(self):
         window = self.window()
@@ -405,7 +453,7 @@ class GlueTests(unittest.TestCase):
             for call in window.process_log.appendPlainText.call_args_list
         )
         self.assertIn("GROMACS failed", logged_text)
-        self.assertIn("código 3", logged_text)
+        self.assertIn("exit code 3", logged_text)
 
     def run_glue(self, window):
         def fake_dialog(title, text):
@@ -413,6 +461,84 @@ class GlueTests(unittest.TestCase):
         with mock.patch.object(ui, "BiobbRunner", lambda binary="gmx": self.runner), \
              mock.patch.object(ui, "showdialog", fake_dialog):
             return window._run_protein_minimization()
+
+    def test_martini_selection_uses_coarse_grained_minimization(self):
+        window = self.window()
+        window.sel_ff = Widget(MARTINI_3_FORCE_FIELD)
+        window.sel_metal = Widget("ZN")
+        window.sel_pdb = Widget(os.path.join(self.cwd, "protein.pdb"))
+        runner = FakeRunner()
+
+        with mock.patch.object(ui, "BiobbRunner", return_value=runner), \
+             mock.patch.object(ui, "ProteinMinimization") as pipeline, \
+             mock.patch.object(ui, "extract_topology"):
+            self.assertTrue(window._run_protein_minimization())
+
+        params = pipeline.call_args.args[0]
+        self.assertEqual(params.force_field, MARTINI_3_FORCE_FIELD)
+        self.assertEqual(
+            params.protein_input,
+            os.path.join(self.cwd, "protein.pdb"),
+        )
+        self.assertIsNone(params.metal)
+        pipeline.return_value.run.assert_called_once_with(os.getcwd(), runner)
+
+    def test_martini_protein_route_stops_before_atomistic_dynamics(self):
+        window = self.window()
+        window.sel_ff = Widget(MARTINI_3_FORCE_FIELD)
+        window.sel_metal = Widget("None")
+        window.sel_pdb = Widget(os.path.join(self.cwd, "protein.pdb"))
+        window._run_protein_minimization = mock.Mock(return_value=True)
+        window._display_loaded_pdb = mock.Mock()
+        window._append_process_log = mock.Mock()
+        window._run_logged_command = mock.Mock()
+
+        with mock.patch.object(
+            ui, "inspect_pdb", return_value=(["A"], [object()])
+        ), mock.patch.object(ui, "showdialog") as showdialog:
+            window.mount_simulation_prot()
+
+        window._display_loaded_pdb.assert_called_once_with(
+            os.path.join(os.getcwd(), "em.pdb")
+        )
+        window._run_logged_command.assert_not_called()
+        showdialog.assert_called_once()
+        self.assertIn("only the protein will be used", showdialog.call_args.args[1])
+
+    def test_martini_with_ligand_file_still_runs_protein_only(self):
+        window = self.window()
+        window.sel_ff = Widget(MARTINI_3_FORCE_FIELD)
+        window.sel_proj_name = Widget("project")
+        window.sel_sav_direc = Widget(self.cwd)
+        window.sel_exp_fol = mock.Mock(isChecked=mock.Mock(return_value=False))
+        window._structure_review_cancelled = False
+        window.mount_simulation_prot = mock.Mock()
+        window.run_simulation = mock.Mock()
+        dialogs = []
+
+        with mock.patch.object(ui.os, "chdir"), \
+             mock.patch.object(
+                 ui.os.path, "exists",
+                 side_effect=lambda file_path: file_path in {
+                     "protein.pdb", "Ligand.mol2"
+                 },
+             ), \
+             mock.patch.object(ui, "showdialog", side_effect=lambda *args: dialogs.append(args)):
+            window.choose_run_simulation()
+
+        window.mount_simulation_prot.assert_called_once_with()
+        window.run_simulation.assert_not_called()
+
+    def test_direct_ligand_route_uses_protein_only_martini_route(self):
+        window = ui.Ui_MainWindo.__new__(ui.Ui_MainWindo)
+        window.sel_ff = Widget(MARTINI_3_FORCE_FIELD)
+        window.mount_simulation_prot = mock.Mock()
+        window._run_logged_command = mock.Mock()
+
+        window.mount_simulation_lig()
+
+        window.mount_simulation_prot.assert_called_once_with()
+        window._run_logged_command.assert_not_called()
 
     def test_success_writes_topology_and_returns_true(self):
         ok = self.run_glue(self.window())
@@ -491,6 +617,17 @@ class GlueTests(unittest.TestCase):
 
         self.assertEqual(self.dialogs[0][0], "Error")
         self.assertIn("missing.xtc", self.dialogs[0][1])
+
+
+class QmmmUiTests(unittest.TestCase):
+    def test_setup_ui_creates_the_qmmm_tab(self):
+        window = ui.Ui_MainWindo()
+        with mock.patch.object(ui, "gromacs_flag", return_value=True):
+            window.setupUi(mock.Mock())
+
+        self.assertIsNotNone(window.qmmm_tab)
+        self.assertIsNotNone(window.qmmm_run_button)
+        self.assertIsNotNone(window.qmmm_awh_group1)
 
 
 if __name__ == "__main__":

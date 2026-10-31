@@ -10,7 +10,7 @@ setup(
     url='https://github.com/lkagami/ligro',
     keywords=['ligro'],
     include_package_data=True,
-    entry_points={'console_scripts': ['ligro = ligro.ligro:main_init']},
+    entry_points={'console_scripts': ['ligro = ligro.main:main_init']},
     zip_safe=False,
     classifiers=[
         '',

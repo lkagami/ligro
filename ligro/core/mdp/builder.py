@@ -1,7 +1,7 @@
 """Builds GROMACS .mdp text for minimization runs.
 
 Replaces the ~10 copies of `cat << EOF >| em*.mdp` template strings in
-ligro.py. Defaults are the values the protein branch used, so a builder
+main.py. Defaults are the values the protein branch used, so a builder
 call with no arguments reproduces the original steep-descent input.
 """
 from dataclasses import dataclass, field

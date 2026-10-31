@@ -4,10 +4,14 @@ import shutil
 import sys
 import tempfile
 import unittest
+import zipfile
+from unittest import mock
 
+from ligro import biobb_gmx
 from ligro.core.io.pdb import clean_protein_pdb, ion_option
 from ligro.core.mdp.builder import MinimizationMdp, render_minimization_mdp
 from ligro.core.pipelines.minimization import (
+    MARTINI_3_FORCE_FIELD,
     ProteinMinimization,
     ProteinMinimizationParams,
 )
@@ -17,6 +21,36 @@ from ligro.core.runners import FakeRunner
 def _read(path):
     with open(path, encoding="utf-8") as fh:
         return fh.read()
+
+
+class FakeMartiniRunner(FakeRunner):
+    def martinize2(self, pdb, gro, top, **kwargs):
+        super().martinize2(pdb, gro, top, **kwargs)
+        with open(gro, "w", encoding="ascii") as structure:
+            structure.write("CG structure\n")
+        with open(top, "w", encoding="ascii") as topology:
+            topology.write(
+                '#include "martini_v3.0.0.itp"\n'
+                '#include "Protein_A.itp"\n'
+                "[ system ]\nProtein\n[ molecules ]\nProtein_A 1\n"
+            )
+        with open(os.path.join(os.path.dirname(top), "Protein_A.itp"),
+                  "w", encoding="ascii") as include:
+            include.write("[ moleculetype ]\nProtein_A 1\n")
+
+    def editconf(self, gro_in, gro_out, *args, **kwargs):
+        super().editconf(gro_in, gro_out, *args, **kwargs)
+        shutil.copyfile(gro_in, gro_out)
+
+    def mdrun(self, tpr, deffnm, *args, **kwargs):
+        super().mdrun(tpr, deffnm, *args, **kwargs)
+        with open(deffnm + ".gro", "w", encoding="ascii") as structure:
+            structure.write("minimized CG structure\n")
+
+    def gro_to_pdb(self, gro_in, pdb_out):
+        super().gro_to_pdb(gro_in, pdb_out)
+        with open(pdb_out, "w", encoding="ascii") as structure:
+            structure.write("minimized CG PDB\n")
 
 
 class MdpBuilderTests(unittest.TestCase):
@@ -34,6 +68,47 @@ class MdpBuilderTests(unittest.TestCase):
     def test_invalid_integrator_rejected(self):
         with self.assertRaises(ValueError):
             MinimizationMdp(integrator="leapfrog")
+
+
+class Martinize2AdapterTests(unittest.TestCase):
+    def test_runs_martinize2_and_checks_generated_files(self):
+        with tempfile.TemporaryDirectory() as workdir:
+            pdb_path = os.path.join(workdir, "protein.pdb")
+            gro_path = os.path.join(workdir, "protein_cg.pdb")
+            top_path = os.path.join(workdir, "protein.top")
+            with open(pdb_path, "w", encoding="ascii") as pdb:
+                pdb.write("PDB\n")
+
+            def run(command, **kwargs):
+                with open(command[command.index("-x") + 1], "w") as output:
+                    output.write("CG structure\n")
+                with open(command[command.index("-o") + 1], "w") as output:
+                    output.write("CG topology\n")
+                return mock.Mock(returncode=0, stdout="", stderr="")
+
+            with mock.patch.object(biobb_gmx.subprocess, "run", side_effect=run) as call:
+                result = biobb_gmx.martinize2(
+                    pdb_path, gro_path, top_path, force_field="martini3001"
+                )
+
+        self.assertEqual(result, gro_path)
+        command = call.call_args.args[0]
+        self.assertEqual(command[0], "martinize2")
+        self.assertEqual(command[command.index("-ff") + 1], "martini3001")
+        self.assertTrue(os.path.isabs(command[command.index("-o") + 1]))
+
+    def test_reports_martinize2_failure(self):
+        with mock.patch.object(
+            biobb_gmx.subprocess,
+            "run",
+            return_value=mock.Mock(
+                returncode=2, stdout="", stderr="invalid protein structure"
+            ),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "invalid protein structure"):
+                biobb_gmx.martinize2(
+                    "protein.pdb", "protein_cg.pdb", "protein.top"
+                )
 
 
 class PdbHelperTests(unittest.TestCase):
@@ -92,6 +167,33 @@ class PlanTests(unittest.TestCase):
         p = ProteinMinimization(ProteinMinimizationParams())
         p.plan()  # must not need a workdir or a runner
 
+    def test_martini_plan_converts_boxes_and_minimizes_without_atomistic_steps(self):
+        plan = ProteinMinimization(
+            ProteinMinimizationParams(force_field=MARTINI_3_FORCE_FIELD)
+        ).plan()
+        self.assertEqual(
+            plan,
+            [
+                "clean_pdb",
+                "martinize2",
+                "editconf",
+                "steep_minimization",
+                "postprocess",
+            ],
+        )
+
+    def test_martini_sd_plus_cg_plan_includes_both_minimizers(self):
+        plan = ProteinMinimization(
+            ProteinMinimizationParams(
+                force_field=MARTINI_3_FORCE_FIELD,
+                min_algorithm="CG Algorithm",
+            )
+        ).plan()
+        self.assertEqual(
+            plan[-3:],
+            ["steep_minimization", "cg_minimization", "postprocess"],
+        )
+
 
 class RunTests(unittest.TestCase):
     def setUp(self):
@@ -140,6 +242,111 @@ class RunTests(unittest.TestCase):
         with self.assertRaises(RuntimeError) as ctx:
             ProteinMinimization(ProteinMinimizationParams()).run(self.wd, r)
         self.assertIn("genion", str(ctx.exception))
+
+    def test_martini_run_uses_biobb_gromacs_and_archives_generated_topology(self):
+        runner = FakeMartiniRunner()
+        params = ProteinMinimizationParams(
+            force_field=MARTINI_3_FORCE_FIELD,
+            min_steps=1500,
+        )
+
+        result = ProteinMinimization(params).run(self.wd, runner)
+
+        self.assertEqual(result, os.path.join(self.wd, "em.pdb"))
+        self.assertEqual(
+            runner.names(),
+            ["martinize2", "editconf", "grompp", "mdrun", "gro_to_pdb"],
+        )
+        martinize_call = next(
+            call for call in runner.calls if call[0] == "martinize2"
+        )
+        self.assertEqual(martinize_call[2], {"force_field": "martini3001"})
+        with open(os.path.join(self.wd, "em_real.mdp"), encoding="utf-8") as mdp:
+            contents = mdp.read()
+        self.assertIn("integrator = steep", contents)
+        self.assertIn("coulombtype = Reaction-Field", contents)
+        self.assertIn("epsilon_r = 15", contents)
+        self.assertNotIn("PME", contents)
+        with zipfile.ZipFile(os.path.join(self.wd, "trp.zip")) as topology:
+            self.assertIn("trp.top", topology.namelist())
+            self.assertIn("Protein_A.itp", topology.namelist())
+        self.assertFalse(os.path.exists(os.path.join(self.wd, "Protein_A.itp")))
+
+    def test_martini_uses_selected_pdb_outside_project_directory(self):
+        source_dir = tempfile.mkdtemp()
+        try:
+            selected_pdb = os.path.join(source_dir, "selected.pdb")
+            with open(selected_pdb, "w", encoding="ascii") as pdb:
+                pdb.write("ATOM      1  CA  ALA A   1\n")
+
+            runner = FakeMartiniRunner()
+            ProteinMinimization(
+                ProteinMinimizationParams(
+                    force_field=MARTINI_3_FORCE_FIELD,
+                    protein_input=selected_pdb,
+                )
+            ).run(self.wd, runner)
+
+            martinize_call = next(
+                call for call in runner.calls if call[0] == "martinize2"
+            )
+            self.assertEqual(
+                martinize_call[1][0],
+                os.path.join(self.wd, "protein_clean.pdb"),
+            )
+            with open(martinize_call[1][0], encoding="ascii") as cleaned:
+                self.assertIn("ALA", cleaned.read())
+        finally:
+            shutil.rmtree(source_dir)
+
+    def test_martini_missing_input_reports_the_expected_file(self):
+        missing_pdb = os.path.join(self.wd, "not-selected.pdb")
+        with self.assertRaisesRegex(
+            RuntimeError, "Protein PDB input was not found"
+        ):
+            ProteinMinimization(
+                ProteinMinimizationParams(
+                    force_field=MARTINI_3_FORCE_FIELD,
+                    protein_input=missing_pdb,
+                )
+            ).run(self.wd, FakeMartiniRunner())
+
+    def test_martini_ignores_selected_metal_and_keeps_only_protein_records(self):
+        source = os.path.join(self.wd, "with_ligand_and_zinc.pdb")
+        with open(source, "w", encoding="ascii") as pdb:
+            pdb.write(
+                "ATOM      1  CA  ALA A   1\n"
+                "HETATM    2 ZN    ZN A 200\n"
+                "HETATM    3  C1  LIG A 501\n"
+            )
+        runner = FakeMartiniRunner()
+
+        ProteinMinimization(
+            ProteinMinimizationParams(
+                force_field=MARTINI_3_FORCE_FIELD,
+                protein_input=source,
+                metal="ZN",
+            )
+        ).run(self.wd, runner)
+
+        with open(os.path.join(self.wd, "protein_clean.pdb"), encoding="ascii") as clean:
+            cleaned = clean.read()
+        self.assertIn("ALA", cleaned)
+        self.assertNotIn("ZN", cleaned)
+        self.assertNotIn("LIG", cleaned)
+
+    def test_martini_cg_minimization_uses_steep_then_cg(self):
+        runner = FakeMartiniRunner()
+        ProteinMinimization(
+            ProteinMinimizationParams(
+                force_field=MARTINI_3_FORCE_FIELD,
+                min_algorithm="CG Algorithm",
+            )
+        ).run(self.wd, runner)
+
+        self.assertEqual(runner.names().count("mdrun"), 2)
+        with open(os.path.join(self.wd, "em_cg.mdp"), encoding="utf-8") as mdp:
+            self.assertIn("integrator = cg", mdp.read())
 
     def test_core_does_not_import_gui_toolkits(self):
         # Checked in a fresh interpreter: other test modules stub PyQt5 in

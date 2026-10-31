@@ -19,6 +19,7 @@
 #  before relying on them (see the TODO markers).
 
 import os
+import subprocess
 
 
 def _run(block_fn, label, **kwargs):
@@ -108,6 +109,47 @@ def pdb2gmx(pdb, gro, top_zip, force_field="amber99sb-ildn",
         extra["ignh"] = True          # confirmed property name
     props = _gmx_props(extra, binary)
     _run(_pdb2gmx, "pdb2gmx", properties=props, **io)
+    return gro
+
+
+def martinize2(pdb, gro, top, force_field="martini3001", binary="martinize2"):
+    """Generate a Martini coarse-grained protein structure and topology."""
+    command = [
+        binary,
+        "-f", os.path.abspath(pdb),
+        "-x", os.path.abspath(gro),
+        "-o", os.path.abspath(top),
+        "-ff", force_field,
+    ]
+    try:
+        result = subprocess.run(
+            command,
+            cwd=os.path.dirname(os.path.abspath(pdb)),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError as exc:
+        raise RuntimeError(
+            "Could not start martinize2. Install vermouth/martinize2 and ensure "
+            "the command is available on PATH."
+        ) from exc
+
+    if result.returncode:
+        details = (result.stderr or result.stdout).strip()
+        raise RuntimeError(
+            "martinize2 failed with exit code {}{}".format(
+                result.returncode,
+                ": " + details if details else "",
+            )
+        )
+    for output_path in (gro, top):
+        if not os.path.isfile(output_path):
+            raise RuntimeError(
+                "martinize2 did not produce the expected output: {}".format(
+                    output_path
+                )
+            )
     return gro
 
 

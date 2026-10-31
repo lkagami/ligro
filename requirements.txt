@@ -28,7 +28,7 @@ biobb-gromacs>=4.0
 # Protein-ligand interaction analysis
 plip>=2.0
 
-# Ligand parameterization (imported as `acpype_lib` in ligro.py -- verify
+# Ligand parameterization (imported as `acpype_lib` in main.py -- verify
 # this module name against the installed acpype version)
 acpype>=2020.0
 

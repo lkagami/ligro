@@ -10,10 +10,11 @@ from typing import Protocol
 
 
 class Runner(Protocol):
+    def martinize2(self, pdb, gro, top, force_field): ...
     def pdb2gmx(self, pdb, gro, top_zip, force_field, water, ignore_h): ...
     def editconf(self, gro_in, gro_out, box_type, distance): ...
     def solvate(self, gro_in, top_zip_in, gro_out, top_zip_out): ...
-    def grompp(self, mdp, gro, top_zip, tpr, ref=None): ...
+    def grompp(self, mdp, gro, top_zip, tpr, ref=None, ndx=None): ...
     def genion(self, tpr, top_zip, gro_out, top_zip_out, ion_opt): ...
     def mdrun(self, tpr, deffnm, write_xtc=False, write_cpt=False): ...
     def gro_to_pdb(self, gro_in, pdb_out): ...
@@ -29,6 +30,9 @@ class BiobbRunner:
         from ligro import biobb_gmx  # lazy: biobb is only needed here
         return biobb_gmx
 
+    def martinize2(self, pdb, gro, top, force_field):
+        return self._bg().martinize2(pdb, gro, top, force_field=force_field)
+
     def pdb2gmx(self, pdb, gro, top_zip, force_field, water, ignore_h):
         return self._bg().pdb2gmx(pdb, gro, top_zip, force_field=force_field,
                                   water=water, binary=self.binary, ignore_h=ignore_h)
@@ -41,8 +45,10 @@ class BiobbRunner:
         return self._bg().solvate(gro_in, top_zip_in, gro_out, top_zip_out,
                                   binary=self.binary)
 
-    def grompp(self, mdp, gro, top_zip, tpr, ref=None):
-        return self._bg().grompp(mdp, gro, top_zip, tpr, ref=ref, binary=self.binary)
+    def grompp(self, mdp, gro, top_zip, tpr, ref=None, ndx=None):
+        return self._bg().grompp(
+            mdp, gro, top_zip, tpr, ref=ref, ndx=ndx, binary=self.binary
+        )
 
     def genion(self, tpr, top_zip, gro_out, top_zip_out, ion_opt):
         key, value = ion_opt   # 'num_pos' -> np, 'num_neg' -> nn, 'conc' -> concentration
@@ -67,6 +73,8 @@ class FakeRunner:
     def __init__(self, fail_on=None):
         self.calls = []
         self.fail_on = fail_on
+
+    def martinize2(self, *a, **k): self._record("martinize2", a, k)
 
     def _record(self, name, args, kwargs):
         self.calls.append((name, args, kwargs))

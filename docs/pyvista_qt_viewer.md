@@ -11,10 +11,13 @@ LiGRO requests a desktop OpenGL 3.2 core context before creating the Qt
 application; this is the minimum needed for VTK's GLSL 1.50 shaders. If the
 driver cannot provide that context, update the graphics driver or use a
 graphics device that supports OpenGL 3.2 or newer.
-The viewer reads the prepared PDB directly, displays protein and non-solvent
-ligand atoms as element-colored spheres, and infers nearby covalent bonds for
-the stick-like connections. Bulk water and common ions are hidden to keep the
-complex legible.
+The viewer reads the PDB directly and draws the protein backbone as a smooth
+cartoon tube. Ligand atoms and all atoms of protein residues within 4.5
+angstroms of a non-protein heavy atom are displayed as element-colored spheres
+with inferred covalent bonds. Labels identify each displayed ligand component
+and pocket residue by residue name, chain, and residue number. Bulk water and
+common ions are hidden to keep the complex legible. Coarse-grained protein
+PDBs without alpha-carbon atoms are displayed as bead spheres.
 
 ## Install
 

@@ -1,4 +1,4 @@
-"""Pure-Python replacements for the grep/shell helpers used by ligro.py."""
+"""Pure-Python replacements for the grep/shell helpers used by main.py."""
 import os
 
 

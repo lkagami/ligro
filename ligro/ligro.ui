@@ -325,7 +325,7 @@
         <rect>
          <x>140</x>
          <y>30</y>
-         <width>131</width>
+         <width>180</width>
          <height>22</height>
         </rect>
        </property>
@@ -378,13 +378,21 @@
          <string>OPLS-AA/L</string>
         </property>
        </item>
+       <item>
+        <property name="text">
+         <string>Martini 3 (CG)</string>
+        </property>
+        <property name="toolTip">
+         <string>Protein-only coarse-grained setup and minimization; no CG dynamics.</string>
+        </property>
+       </item>
       </widget>
       <widget class="QLabel" name="label_3">
        <property name="geometry">
         <rect>
-         <x>310</x>
+         <x>330</x>
          <y>40</y>
-         <width>47</width>
+         <width>35</width>
          <height>13</height>
         </rect>
        </property>
@@ -395,7 +403,7 @@
       <widget class="QComboBox" name="sel_metal">
        <property name="geometry">
         <rect>
-         <x>370</x>
+         <x>375</x>
          <y>30</y>
          <width>91</width>
          <height>22</height>

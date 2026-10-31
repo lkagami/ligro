@@ -30,6 +30,7 @@ COVALENT_RADII = {
     "BR": 1.20,
     "I": 1.39,
 }
+POCKET_CUTOFF = 4.5
 
 
 @dataclass(frozen=True)
@@ -135,6 +136,132 @@ def select_complex_atoms(atoms: list[PDBAtom]) -> list[PDBAtom]:
             "removal."
         )
     return selected
+
+
+def residue_key(atom: PDBAtom) -> tuple[str, str, str]:
+    return atom.chain, atom.residue_id, atom.residue
+
+
+def is_coarse_grained_protein(atoms: list[PDBAtom]) -> bool:
+    protein_atoms = [
+        atom for atom in atoms if atom.residue in PROTEIN_RESIDUES
+    ]
+    return bool(protein_atoms) and not any(
+        atom.name == "CA" for atom in protein_atoms
+    )
+
+
+def select_pocket_residues(
+    atoms: list[PDBAtom], cutoff: float = POCKET_CUTOFF
+) -> set[tuple[str, str, str]]:
+    """Return protein residues with an atom within cutoff of a non-protein atom."""
+    protein_atoms = [
+        atom for atom in atoms if atom.residue in PROTEIN_RESIDUES
+    ]
+    ligand_atoms = [
+        atom for atom in atoms if atom.residue not in PROTEIN_RESIDUES
+    ]
+    ligand_coordinates = np.asarray(
+        [atom.coordinates for atom in ligand_atoms if atom.element != "H"],
+        dtype=np.float32,
+    )
+    if not protein_atoms or not len(ligand_coordinates):
+        return set()
+
+    pocket_residues: set[tuple[str, str, str]] = set()
+    cutoff_squared = cutoff * cutoff
+    protein_coordinates = np.asarray(
+        [atom.coordinates for atom in protein_atoms], dtype=np.float32
+    )
+    for start in range(0, len(protein_atoms), 1024):
+        chunk = protein_coordinates[start:start + 1024]
+        deltas = chunk[:, None, :] - ligand_coordinates[None, :, :]
+        close_atoms = np.any(np.sum(deltas * deltas, axis=2) <= cutoff_squared, axis=1)
+        pocket_residues.update(
+            residue_key(atom)
+            for atom, is_close in zip(protein_atoms[start:start + 1024], close_atoms)
+            if is_close
+        )
+    return pocket_residues
+
+
+def residue_label_positions(
+    atoms: list[PDBAtom],
+    pocket_residues: set[tuple[str, str, str]],
+) -> tuple[np.ndarray, list[str]]:
+    """Return heavy-atom centroids and identifiers for ligand and pocket residues."""
+    grouped_atoms: dict[tuple[str, str, str], list[PDBAtom]] = {}
+    for atom in atoms:
+        key = residue_key(atom)
+        if atom.residue not in PROTEIN_RESIDUES or key in pocket_residues:
+            if atom.element != "H":
+                grouped_atoms.setdefault(key, []).append(atom)
+
+    positions = []
+    labels = []
+    for (chain, residue_id, residue), residue_atoms in grouped_atoms.items():
+        coordinates = np.asarray(
+            [atom.coordinates for atom in residue_atoms], dtype=np.float32
+        )
+        positions.append(coordinates.mean(axis=0))
+        labels.append(
+            "{} {}:{}".format(residue, chain or "-", residue_id or "?")
+        )
+    return np.asarray(positions, dtype=np.float32).reshape((-1, 3)), labels
+
+
+def protein_backbone_segments(
+    atoms: list[PDBAtom],
+) -> list[np.ndarray]:
+    """Return CA coordinate runs, split by chain breaks, for cartoon rendering."""
+    residues: dict[tuple[str, str, str], PDBAtom] = {}
+    for atom in atoms:
+        if atom.residue in PROTEIN_RESIDUES and atom.name == "CA":
+            residues.setdefault(residue_key(atom), atom)
+
+    segments: list[np.ndarray] = []
+    current: list[tuple[float, float, float]] = []
+    current_chain = None
+    for atom in residues.values():
+        if current and (
+            atom.chain != current_chain
+            or np.linalg.norm(np.asarray(atom.coordinates) - current[-1]) > 4.5
+        ):
+            if len(current) >= 2:
+                segments.append(np.asarray(current, dtype=np.float32))
+            current = []
+        current.append(atom.coordinates)
+        current_chain = atom.chain
+    if len(current) >= 2:
+        segments.append(np.asarray(current, dtype=np.float32))
+    return segments
+
+
+def coarse_backbone_segments(
+    atoms: list[PDBAtom],
+) -> list[np.ndarray]:
+    """Return Martini BB bead runs, split by chain breaks and large gaps."""
+    residues: dict[tuple[str, str, str], PDBAtom] = {}
+    for atom in atoms:
+        if atom.residue in PROTEIN_RESIDUES and atom.name == "BB":
+            residues.setdefault(residue_key(atom), atom)
+
+    segments: list[np.ndarray] = []
+    current: list[tuple[float, float, float]] = []
+    current_chain = None
+    for atom in residues.values():
+        if current and (
+            atom.chain != current_chain
+            or np.linalg.norm(np.asarray(atom.coordinates) - current[-1]) > 8.0
+        ):
+            if len(current) >= 2:
+                segments.append(np.asarray(current, dtype=np.float32))
+            current = []
+        current.append(atom.coordinates)
+        current_chain = atom.chain
+    if len(current) >= 2:
+        segments.append(np.asarray(current, dtype=np.float32))
+    return segments
 
 
 def infer_bonds(atoms: list[PDBAtom]) -> np.ndarray:

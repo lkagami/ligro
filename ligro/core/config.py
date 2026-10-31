@@ -1,6 +1,6 @@
 """File names shared by the pipelines.
 
-These match the names the original ligro.py wrote, so the rest of the
+These match the names the original main.py wrote, so the rest of the
 application (analysis, trajectory tools) keeps finding the same files.
 """
 

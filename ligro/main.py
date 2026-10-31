@@ -39,8 +39,13 @@ except Exception:
 
 # Core pipelines (no GUI imports); see ligro/core/
 from ligro.core import config as core_config
-from ligro.core.pipelines.minimization import ProteinMinimization, ProteinMinimizationParams
+from ligro.core.pipelines.minimization import (
+    MARTINI_3_FORCE_FIELD,
+    ProteinMinimization,
+    ProteinMinimizationParams,
+)
 from ligro.core.pipelines.dynamics import MolecularDynamics, DynamicsParams
+from ligro.core.pipelines.qmmm import QmmmParams, QmmmSimulation
 from ligro.core.runners import BiobbRunner
 from ligro.core.io.topology import extract_topology
 from ligro.core.io.pdb_prepare import (
@@ -303,7 +308,7 @@ class Ui_MainWindo(object):
         self.label_2.setGeometry(QtCore.QRect(10, 30, 131, 16))
         self.label_2.setObjectName("label_2")
         self.sel_ff = QtWidgets.QComboBox(self.groupBox_7)
-        self.sel_ff.setGeometry(QtCore.QRect(140, 30, 131, 22))
+        self.sel_ff.setGeometry(QtCore.QRect(140, 30, 180, 22))
         self.sel_ff.setAccessibleName("")
         self.sel_ff.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.sel_ff.setObjectName("sel_ff")
@@ -315,11 +320,12 @@ class Ui_MainWindo(object):
         self.sel_ff.addItem("")
         self.sel_ff.addItem("")
         self.sel_ff.addItem("")
+        self.sel_ff.addItem("")
         self.label_3 = QtWidgets.QLabel(self.groupBox_7)
-        self.label_3.setGeometry(QtCore.QRect(310, 40, 47, 13))
+        self.label_3.setGeometry(QtCore.QRect(330, 40, 35, 13))
         self.label_3.setObjectName("label_3")
         self.sel_metal = QtWidgets.QComboBox(self.groupBox_7)
-        self.sel_metal.setGeometry(QtCore.QRect(370, 30, 91, 22))
+        self.sel_metal.setGeometry(QtCore.QRect(375, 30, 91, 22))
         self.sel_metal.setObjectName("sel_metal")
         self.sel_metal.addItem("")
         self.sel_metal.addItem("")
@@ -612,6 +618,168 @@ class Ui_MainWindo(object):
         self.run_plip.setObjectName("run_plip")
         self.run_plip.clicked.connect(self.plip)
         self.tabWidget.addTab(self.tab_2, "")
+        self.qmmm_tab = QtWidgets.QWidget()
+        self.qmmm_tab.setObjectName("qmmm_tab")
+        qmmm_layout = QtWidgets.QVBoxLayout(self.qmmm_tab)
+        qmmm_scroll = QtWidgets.QScrollArea(self.qmmm_tab)
+        qmmm_scroll.setWidgetResizable(True)
+        qmmm_content = QtWidgets.QWidget(qmmm_scroll)
+        qmmm_content_layout = QtWidgets.QVBoxLayout(qmmm_content)
+        file_group = QtWidgets.QGroupBox("Input files and output", qmmm_content)
+        file_layout = QtWidgets.QGridLayout(file_group)
+
+        def qmmm_file_row(object_name, dialog_title, file_filter):
+            row = QtWidgets.QWidget(file_group)
+            row_layout = QtWidgets.QHBoxLayout(row)
+            row_layout.setContentsMargins(0, 0, 0, 0)
+            field = QtWidgets.QLineEdit(row)
+            field.setObjectName(object_name)
+            browse = QtWidgets.QPushButton("Browse", row)
+            browse.clicked.connect(
+                lambda _checked=False, target=field, title=dialog_title,
+                file_type=file_filter: self._select_qmmm_file(
+                    target, title, file_type
+                )
+            )
+            row_layout.addWidget(field)
+            row_layout.addWidget(browse)
+            return row, field
+
+        def add_file_field(row, column, title, field_row):
+            label = QtWidgets.QLabel(title, file_group)
+            label.setWordWrap(True)
+            file_layout.addWidget(label, row * 2, column)
+            file_layout.addWidget(field_row, row * 2 + 1, column)
+
+        structure_row, self.qmmm_structure_path = qmmm_file_row(
+            "qmmm_structure_path", "Select equilibrated GRO file", "GRO files (*.gro)"
+        )
+        topology_row, self.qmmm_topology_path = qmmm_file_row(
+            "qmmm_topology_path", "Select topology archive", "ZIP files (*.zip)"
+        )
+        index_row, self.qmmm_index_path = qmmm_file_row(
+            "qmmm_index_path", "Select GROMACS index file", "Index files (*.ndx)"
+        )
+        output_row = QtWidgets.QWidget(file_group)
+        output_layout = QtWidgets.QHBoxLayout(output_row)
+        output_layout.setContentsMargins(0, 0, 0, 0)
+        self.qmmm_output_dir = QtWidgets.QLineEdit(
+            os.path.join(os.getcwd(), "qmmm_awh"), output_row
+        )
+        self.qmmm_output_dir.setObjectName("qmmm_output_dir")
+        output_browse = QtWidgets.QPushButton("Browse", output_row)
+        output_browse.clicked.connect(self._select_qmmm_output_directory)
+        output_layout.addWidget(self.qmmm_output_dir)
+        output_layout.addWidget(output_browse)
+        add_file_field(0, 0, "Equilibrated structure (.gro):", structure_row)
+        add_file_field(0, 1, "Topology archive (.zip):", topology_row)
+        add_file_field(1, 0, "Index file (.ndx):", index_row)
+        add_file_field(1, 1, "Output directory:", output_row)
+
+        settings_group = QtWidgets.QGroupBox("System and QM settings", qmmm_content)
+        settings_layout = QtWidgets.QGridLayout(settings_group)
+        settings_fields = []
+
+        self.qmmm_binary = QtWidgets.QLineEdit("gmx", settings_group)
+        self.qmmm_binary.setObjectName("qmmm_binary")
+        settings_fields.append(("CP2K-enabled GROMACS executable:", self.qmmm_binary))
+        self.qmmm_group = QtWidgets.QLineEdit("QMatoms", settings_group)
+        self.qmmm_group.setObjectName("qmmm_group")
+        settings_fields.append(("QM atom group:", self.qmmm_group))
+        self.qmmm_charge = QtWidgets.QSpinBox(settings_group)
+        self.qmmm_charge.setRange(-100, 100)
+        self.qmmm_charge.setValue(0)
+        settings_fields.append(("QM region charge:", self.qmmm_charge))
+        self.qmmm_multiplicity = QtWidgets.QSpinBox(settings_group)
+        self.qmmm_multiplicity.setRange(1, 20)
+        self.qmmm_multiplicity.setValue(1)
+        settings_fields.append(("QM region multiplicity:", self.qmmm_multiplicity))
+        self.qmmm_method = QtWidgets.QComboBox(settings_group)
+        self.qmmm_method.addItems(("PBE", "BLYP"))
+        settings_fields.append(("QM method:", self.qmmm_method))
+        self.qmmm_timestep = QtWidgets.QDoubleSpinBox(settings_group)
+        self.qmmm_timestep.setRange(0.0001, 0.01)
+        self.qmmm_timestep.setDecimals(4)
+        self.qmmm_timestep.setSingleStep(0.0001)
+        self.qmmm_timestep.setValue(0.001)
+        settings_fields.append(("Time step (ps):", self.qmmm_timestep))
+        self.qmmm_steps = QtWidgets.QSpinBox(settings_group)
+        self.qmmm_steps.setRange(1, 100000000)
+        self.qmmm_steps.setValue(1000)
+        settings_fields.append(("Simulation steps:", self.qmmm_steps))
+        self.qmmm_temperature = QtWidgets.QDoubleSpinBox(settings_group)
+        self.qmmm_temperature.setRange(1.0, 1000.0)
+        self.qmmm_temperature.setDecimals(1)
+        self.qmmm_temperature.setValue(300.0)
+        settings_fields.append(("Temperature (K):", self.qmmm_temperature))
+        for field_index, (label_text, field) in enumerate(settings_fields):
+            row, column = divmod(field_index, 2)
+            label = QtWidgets.QLabel(label_text, settings_group)
+            label.setWordWrap(True)
+            settings_layout.addWidget(label, row * 2, column)
+            settings_layout.addWidget(field, row * 2 + 1, column)
+        settings_layout.setColumnStretch(0, 1)
+        settings_layout.setColumnStretch(1, 1)
+
+        awh_group = QtWidgets.QGroupBox("AWH reaction coordinate", qmmm_content)
+        awh_layout = QtWidgets.QGridLayout(awh_group)
+        self.qmmm_awh_group1 = QtWidgets.QLineEdit(awh_group)
+        self.qmmm_awh_group1.setObjectName("qmmm_awh_group1")
+        self.qmmm_awh_group2 = QtWidgets.QLineEdit(awh_group)
+        self.qmmm_awh_group2.setObjectName("qmmm_awh_group2")
+        self.qmmm_awh_start = QtWidgets.QDoubleSpinBox(awh_group)
+        self.qmmm_awh_start.setRange(0.0, 100.0)
+        self.qmmm_awh_start.setDecimals(3)
+        self.qmmm_awh_start.setValue(0.2)
+        self.qmmm_awh_end = QtWidgets.QDoubleSpinBox(awh_group)
+        self.qmmm_awh_end.setRange(0.0, 100.0)
+        self.qmmm_awh_end.setDecimals(3)
+        self.qmmm_awh_end.setValue(0.5)
+        self.qmmm_awh_force = QtWidgets.QDoubleSpinBox(awh_group)
+        self.qmmm_awh_force.setRange(0.000001, 10000000.0)
+        self.qmmm_awh_force.setDecimals(3)
+        self.qmmm_awh_force.setValue(1000.0)
+        self.qmmm_awh_diffusion = QtWidgets.QDoubleSpinBox(awh_group)
+        self.qmmm_awh_diffusion.setRange(0.00000001, 1000.0)
+        self.qmmm_awh_diffusion.setDecimals(8)
+        self.qmmm_awh_diffusion.setValue(0.00001)
+        awh_fields = (
+            ("First index group:", self.qmmm_awh_group1),
+            ("Second index group:", self.qmmm_awh_group2),
+            ("Coordinate start (nm):", self.qmmm_awh_start),
+            ("Coordinate end (nm):", self.qmmm_awh_end),
+            ("Force constant (kJ/mol/nm²):", self.qmmm_awh_force),
+            ("Diffusion estimate (nm²/ps):", self.qmmm_awh_diffusion),
+        )
+        for field_index, (label_text, field) in enumerate(awh_fields):
+            row, column = divmod(field_index, 2)
+            label = QtWidgets.QLabel(label_text, awh_group)
+            label.setWordWrap(True)
+            awh_layout.addWidget(label, row * 2, column)
+            awh_layout.addWidget(field, row * 2 + 1, column)
+        awh_layout.setColumnStretch(0, 1)
+        awh_layout.setColumnStretch(1, 1)
+
+        qmmm_content_layout.addWidget(file_group)
+        qmmm_content_layout.addWidget(settings_group)
+        qmmm_content_layout.addWidget(awh_group)
+        self.qmmm_status = QtWidgets.QLabel(
+            "Requires an equilibrated MM system and a GROMACS build with CP2K support. "
+            "The GRO and index file must use the same atom order; the index file "
+            "must define the QM group and both reaction-coordinate groups.",
+            qmmm_content,
+        )
+        self.qmmm_status.setWordWrap(True)
+        qmmm_content_layout.addWidget(self.qmmm_status)
+        self.qmmm_run_button = QtWidgets.QPushButton(
+            "Run QM/MM with AWH", qmmm_content
+        )
+        self.qmmm_run_button.clicked.connect(self._run_qmmm_calculation)
+        qmmm_content_layout.addWidget(self.qmmm_run_button)
+        qmmm_content_layout.addStretch(1)
+        qmmm_scroll.setWidget(qmmm_content)
+        qmmm_layout.addWidget(qmmm_scroll)
+        self.tabWidget.addTab(self.qmmm_tab, "")
         self.monitor_tab = QtWidgets.QWidget()
         self.monitor_tab.setObjectName("monitor_tab")
         monitor_layout = QtWidgets.QVBoxLayout(self.monitor_tab)
@@ -619,7 +787,7 @@ class Ui_MainWindo(object):
         self.viewer_layout = QtWidgets.QVBoxLayout(self.viewer_container)
         self.viewer_layout.setContentsMargins(0, 0, 0, 0)
         self.viewer_placeholder = QtWidgets.QLabel(
-            "A visualização do complexo aparecerá aqui após a preparação."
+            "The complex structure will appear here after preparation."
         )
         self.viewer_placeholder.setAlignment(QtCore.Qt.AlignCenter)
         self.viewer_layout.addWidget(self.viewer_placeholder)
@@ -658,7 +826,7 @@ class Ui_MainWindo(object):
         self.clear_log_button.setObjectName("clear_log_button")
         self.clear_log_button.clicked.connect(self.process_log.clear)
         log_layout.addWidget(self.clear_log_button)
-        self._append_process_log("Painel de visualização e logs iniciado.")
+        self._append_process_log("Viewer and process log initialized.")
         self.label = QtWidgets.QLabel(self.centralwidget)
         self.label.setGeometry(QtCore.QRect(60, 10, 1100, 21))
         font = QtGui.QFont()
@@ -749,6 +917,17 @@ class Ui_MainWindo(object):
         self.sel_ff.setItemText(5, _translate("MainWindo", "amber99sb-ildn"))
         self.sel_ff.setItemText(6, _translate("MainWindo", "ambergs"))
         self.sel_ff.setItemText(7, _translate("MainWindo", "oplsaa"))
+        self.sel_ff.setItemText(
+            8, _translate("MainWindo", MARTINI_3_FORCE_FIELD)
+        )
+        self.sel_ff.setItemData(
+            8,
+            _translate(
+                "MainWindo",
+                "Protein-only coarse-grained setup and minimization; no CG dynamics.",
+            ),
+            QtCore.Qt.ToolTipRole,
+        )
         self.label_3.setText(_translate("MainWindo", "Metal:"))
         self.sel_metal.setItemText(0, _translate("MainWindo", "None"))
         self.sel_metal.setItemText(1, _translate("MainWindo", "CA"))
@@ -835,6 +1014,10 @@ class Ui_MainWindo(object):
             self.tabWidget.indexOf(self.monitor_tab),
             _translate("MainWindo", "Complex viewer"),
         )
+        self.tabWidget.setTabText(
+            self.tabWidget.indexOf(self.qmmm_tab),
+            _translate("MainWindo", "QM/MM (CP2K)"),
+        )
         self.continue_structure_button.setText(_translate("MainWindo", "Continue"))
         self.restore_structure_button.setText(_translate("MainWindo", "Restore"))
         self.log_panel.setTitle(_translate("MainWindo", "Process log"))
@@ -847,13 +1030,83 @@ class Ui_MainWindo(object):
         self.actionHelp_2.setText(_translate("MainWindo", "Help"))
 
     def openpdbfile(self):
+        pdb_dialog = QtWidgets.QFileDialog()
+        pdb_file = pdb_dialog.getOpenFileName(
+            None, "Select PDB file", path2, "PDB files (*.pdb)"
+        )[0]
+        if not pdb_file:
+            return
         try:
-            pdb_dialog = QtWidgets.QFileDialog()
-            pdb_file = pdb_dialog.getOpenFileName(None, "Select PDB file", path2, "PDB files (*.pdb)")
-            shutil.copy(pdb_file[0], path+'/protein.pdb')
-            self.sel_pdb.setText(pdb_file[0])
-        except:
-            self.sel_pdb.setText('No select file')
+            shutil.copy(pdb_file, path + "/protein.pdb")
+        except OSError as error:
+            self._append_process_log("Failed to load the PDB: {}".format(error))
+            showdialog("PDB input error", str(error))
+            return
+
+        self.sel_pdb.setText(pdb_file)
+        self._display_loaded_pdb(pdb_file)
+
+    def _select_qmmm_file(self, field, title, file_filter):
+        selected = QtWidgets.QFileDialog.getOpenFileName(
+            None, title, path2, file_filter
+        )[0]
+        if selected:
+            field.setText(selected)
+
+    def _select_qmmm_output_directory(self):
+        selected = QtWidgets.QFileDialog.getExistingDirectory(
+            None, "Select QM/MM output directory", path2
+        )
+        if selected:
+            self.qmmm_output_dir.setText(selected)
+
+    def _run_qmmm_calculation(self):
+        try:
+            params = QmmmParams(
+                structure=str(self.qmmm_structure_path.text()).strip(),
+                topology_archive=str(self.qmmm_topology_path.text()).strip(),
+                index_file=str(self.qmmm_index_path.text()).strip(),
+                qm_group=str(self.qmmm_group.text()).strip(),
+                qm_charge=self.qmmm_charge.value(),
+                qm_multiplicity=self.qmmm_multiplicity.value(),
+                qm_method=str(self.qmmm_method.currentText()),
+                timestep_ps=self.qmmm_timestep.value(),
+                steps=self.qmmm_steps.value(),
+                temperature_k=self.qmmm_temperature.value(),
+                awh_group1=str(self.qmmm_awh_group1.text()).strip(),
+                awh_group2=str(self.qmmm_awh_group2.text()).strip(),
+                awh_start_nm=self.qmmm_awh_start.value(),
+                awh_end_nm=self.qmmm_awh_end.value(),
+                awh_force_constant=self.qmmm_awh_force.value(),
+                awh_diffusion=self.qmmm_awh_diffusion.value(),
+            )
+            binary = str(self.qmmm_binary.text()).strip()
+            if not binary:
+                raise ValueError("Select a CP2K-enabled GROMACS executable.")
+            outputs = QmmmSimulation(params).run(
+                str(self.qmmm_output_dir.text()).strip(),
+                BiobbRunner(binary=binary),
+            )
+        except (FileNotFoundError, OSError, RuntimeError, ValueError) as error:
+            self.qmmm_status.setText("QM/MM calculation failed: {}".format(error))
+            self._append_process_log("QM/MM calculation failed: {}".format(error))
+            showdialog("QM/MM calculation failed", str(error))
+            return None
+
+        self.qmmm_status.setText(
+            "QM/MM with AWH completed. Outputs were written to {}.".format(
+                os.path.dirname(outputs["tpr"])
+            )
+        )
+        self._append_process_log(
+            "QM/MM with AWH completed. GROMACS run input: {}".format(outputs["tpr"])
+        )
+        self._append_process_log(
+            "AWH data are stored in the energy output; use gmx awh for PMF analysis."
+        )
+        self._append_process_log_file(outputs["log"])
+        showdialog("QM/MM calculation complete", "AWH QM/MM simulation completed.")
+        return outputs
 
     def download_pdb_by_id(self):
         pdb_id = str(self.pdb_id_input.text()).strip()
@@ -879,6 +1132,7 @@ class Ui_MainWindo(object):
             return
 
         self.pdb_source_path = pdb_path
+        self._display_loaded_pdb(pdb_path)
         for chain in chains:
             self.pdb_chain_combo.addItem(
                 "Chain {}".format(chain) if chain else "Chain (blank)", chain
@@ -1016,11 +1270,18 @@ class Ui_MainWindo(object):
       find1=os.path.exists('Ligand.mol2')
       find2=os.path.exists('Cofactor.mol2')
       find3=os.path.exists('protein.pdb')
+      use_martini = str(self.sel_ff.currentText()) == MARTINI_3_FORCE_FIELD
+
+      if use_martini:
+          self.mount_simulation_prot()
+          return
 
       if find1 == False:
           showdialog("INFO", "Run Protein simulation")
           self.mount_simulation_prot()
           if self._structure_review_cancelled:
+              return
+          if use_martini:
               return
           self.save_tprfile()
       elif find2 == False:
@@ -1084,11 +1345,18 @@ class Ui_MainWindo(object):
       find1=os.path.exists('Ligand.mol2')
       find2=os.path.exists('Cofactor.mol2')
       find3=os.path.exists('protein.pdb')
+      use_martini = str(self.sel_ff.currentText()) == MARTINI_3_FORCE_FIELD
+
+      if use_martini:
+          self.mount_simulation_prot()
+          return
 
       if find1 == False:
           showdialog("INFO", "Run Protein simulation")
           self.mount_simulation_prot()
           if self._structure_review_cancelled:
+              return
+          if use_martini:
               return
           self.run_simulation()
       elif find2 == False:
@@ -1140,8 +1408,11 @@ class Ui_MainWindo(object):
 
 
     def mount_simulation_lig(self):
+        if str(self.sel_ff.currentText()) == MARTINI_3_FORCE_FIELD:
+            self.mount_simulation_prot()
+            return
         self._show_monitor_panel()
-        self._append_process_log("Iniciando preparação do complexo proteína-ligante.")
+        self._append_process_log("Starting protein-ligand complex preparation.")
         self._run_logged_command("grep 'ATOM ' protein.pdb > protein_clean.pdb")
         mt = str(self.sel_metal.currentText())
         cmd0 = "grep {0} protein.pdb >> protein_clean.pdb".format(mt)
@@ -1844,9 +2115,12 @@ class Ui_MainWindo(object):
           quit()
 
     def mount_simulation_cof(self):
+        if str(self.sel_ff.currentText()) == MARTINI_3_FORCE_FIELD:
+            self.mount_simulation_prot()
+            return
         self._show_monitor_panel()
         self._append_process_log(
-            "Iniciando preparação do complexo proteína-ligante-cofator."
+            "Starting protein-ligand-cofactor complex preparation."
         )
         self._run_logged_command("grep 'ATOM ' protein.pdb > protein_clean.pdb")
         mt = str(self.sel_metal.currentText())
@@ -2621,17 +2895,23 @@ class Ui_MainWindo(object):
         block. Returns True when em.gro, em.pdb and trp.top are ready; on
         failure it shows the error and returns False (no quit())."""
         self._show_monitor_panel()
-        self._append_process_log("Iniciando preparação e minimização da proteína.")
+        self._append_process_log("Starting protein preparation and minimization.")
         try:
             metal = str(self.sel_metal.currentText())
+            use_martini = str(self.sel_ff.currentText()) == MARTINI_3_FORCE_FIELD
             algorithm = str(self.sel_min_alg.currentText())
             params = ProteinMinimizationParams(
                 force_field=str(self.sel_ff.currentText()),
+                protein_input=(
+                    self._martini_protein_input()
+                    if use_martini
+                    else os.path.join(os.getcwd(), core_config.PROTEIN_INPUT)
+                ),
                 water=str(self.sel_water.currentText()),
                 ignore_h=bool(self.ig_hyd.isChecked()),
                 box_type=str(self.comboBox_5.currentText()),
                 box_distance=float(str(self.sel_dist.text())),
-                metal=None if metal == 'None' else metal,
+                metal=None if use_martini or metal == 'None' else metal,
                 ion_mode=str(self.sel_ioniz.currentText()),
                 ion_value=str(self.sel_conc.text()),
                 # GUI items are 'SD Algorithm' (steepest descent only) and
@@ -2643,17 +2923,77 @@ class Ui_MainWindo(object):
             ProteinMinimization(params).run(workdir, BiobbRunner(binary='gmx'))
             extract_topology(os.path.join(workdir, core_config.TOPOLOGY), workdir)
         except (RuntimeError, ValueError, OSError) as error:
-            self._append_process_log("Falha na minimização: {}".format(error))
+            self._append_process_log("Minimization failed: {}".format(error))
             showdialog('Minimization failed', str(error))
             return False
-        self._append_process_log("Preparação e minimização concluídas.")
+        self._append_process_log("Preparation and minimization completed.")
         minimization_log = os.path.join(workdir, "em.log")
         if os.path.isfile(minimization_log):
             self._append_process_log_file(minimization_log)
         return True
 
+    def _martini_protein_input(self):
+        downloaded_pdb = getattr(self, "pdb_source_path", None)
+        if downloaded_pdb and os.path.isfile(downloaded_pdb):
+            return downloaded_pdb
+
+        pdb_widget = getattr(self, "sel_pdb", None)
+        selected_pdb = (
+            str(pdb_widget.text()).strip()
+            if pdb_widget is not None
+            else ""
+        )
+        if selected_pdb and os.path.isfile(selected_pdb):
+            return selected_pdb
+
+        local_pdb = os.path.join(os.getcwd(), core_config.PROTEIN_INPUT)
+        if os.path.isfile(local_pdb):
+            return local_pdb
+
+        application_pdb = os.path.join(path, core_config.PROTEIN_INPUT)
+        if os.path.isfile(application_pdb):
+            return application_pdb
+        return local_pdb
+
+    def _warn_martini_nonprotein_ignored(self):
+        if str(self.sel_ff.currentText()) != MARTINI_3_FORCE_FIELD:
+            return
+
+        protein_input = self._martini_protein_input()
+        has_pdb_ligand = False
+        if os.path.isfile(protein_input):
+            _chains, ligands = inspect_pdb(protein_input)
+            has_pdb_ligand = bool(ligands)
+        has_ligand_file = any(
+            os.path.isfile(os.path.join(os.getcwd(), filename))
+            for filename in ("Ligand.mol2", "Cofactor.mol2")
+        )
+        selected_metal = str(self.sel_metal.currentText()) not in ("", "None")
+        if not (has_pdb_ligand or has_ligand_file or selected_metal):
+            return
+
+        self._append_process_log(
+            "Martini 3 protein-only: ligand, cofactor, and metal inputs will "
+            "be ignored."
+        )
+        showdialog(
+            "Martini 3 — protein only",
+            "A ligand is present in the PDB or input files, or a metal was "
+            "selected. In Martini 3 mode, ligands and metals will not be "
+            "included; only the protein will be used.",
+        )
+
     def mount_simulation_prot(self):
+        if str(self.sel_ff.currentText()) == MARTINI_3_FORCE_FIELD:
+            self._warn_martini_nonprotein_ignored()
         if self._run_protein_minimization():
+          if str(self.sel_ff.currentText()) == MARTINI_3_FORCE_FIELD:
+            self._display_loaded_pdb(os.path.join(os.getcwd(), "em.pdb"))
+            self._append_process_log(
+                "Martini 3 structure minimized without coarse-grained solvent "
+                "or ionization. Coarse-grained dynamics was not started."
+            )
+            return
           stnvt = str(self.sel_nvt_step.text())
           stnpt = str(self.sel_npt_step.text())
           stmd = str(self.sel_md_step.text())
@@ -3004,9 +3344,12 @@ class Ui_MainWindo(object):
           return
 
     def mount_simulation_LIE_complex(self):
+        if str(self.sel_ff.currentText()) == MARTINI_3_FORCE_FIELD:
+            self.mount_simulation_prot()
+            return
         self._structure_review_cancelled = False
         self._show_monitor_panel()
-        self._append_process_log("Iniciando preparação do complexo para cálculo LIE.")
+        self._append_process_log("Starting complex preparation for LIE calculation.")
         try:
             os.chdir(path)
         except:
@@ -4476,25 +4819,17 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
     def _confirm_structure(self, structure_path, restore_path):
         self._structure_review_cancelled = False
         try:
-            from ligro.viewer import create_pyvista_viewer
-
-            self._clear_structure_viewer()
-            self.viewer_placeholder.hide()
-            self.structure_viewer = create_pyvista_viewer(self.viewer_container)
-            self.viewer_layout.addWidget(self.structure_viewer)
-            self._show_monitor_panel()
-            QtWidgets.QApplication.processEvents()
-            self.structure_viewer.load_structure(os.path.abspath(structure_path))
+            self._display_structure_in_viewer(structure_path)
             self._structure_restore_path = os.path.abspath(restore_path)
             self.structure_review_controls.show()
             self._append_process_log(
-                "Estrutura carregada para revisão: {}".format(
+                "Structure loaded for review: {}".format(
                     os.path.abspath(structure_path)
                 )
             )
         except (ImportError, OSError, RuntimeError, ValueError) as error:
             self._structure_review_cancelled = True
-            self._append_process_log("Falha ao carregar a estrutura: {}".format(error))
+            self._append_process_log("Failed to load the structure: {}".format(error))
             showdialog("Viewer error", str(error))
             return False
 
@@ -4505,11 +4840,41 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
         self.structure_review_controls.hide()
         return self._structure_review_result
 
+    def _display_loaded_pdb(self, structure_path):
+        try:
+            self._display_structure_in_viewer(structure_path)
+        except (ImportError, OSError, RuntimeError, ValueError) as error:
+            self._append_process_log("Failed to load the structure: {}".format(error))
+            showdialog("Viewer error", str(error))
+            return
+
+        self._append_process_log(
+            "Structure loaded in the viewer: {}".format(
+                os.path.abspath(structure_path)
+            )
+        )
+
+    def _display_structure_in_viewer(self, structure_path):
+        from ligro.viewer import create_pyvista_viewer
+
+        self._clear_structure_viewer()
+        self.viewer_placeholder.hide()
+        try:
+            self.structure_viewer = create_pyvista_viewer(self.viewer_container)
+            self.viewer_layout.addWidget(self.structure_viewer)
+            self._show_monitor_panel()
+            QtWidgets.QApplication.processEvents()
+            self.structure_viewer.load_structure(os.path.abspath(structure_path))
+        except (ImportError, OSError, RuntimeError, ValueError):
+            self._clear_structure_viewer()
+            self.viewer_placeholder.show()
+            raise
+
     def _continue_structure_review(self):
         self._structure_review_result = True
         self._structure_review_cancelled = False
         self.structure_review_controls.hide()
-        self._append_process_log("Revisão da estrutura confirmada; processo continuando.")
+        self._append_process_log("Structure review confirmed; continuing.")
         if self._structure_review_loop is not None:
             self._structure_review_loop.quit()
 
@@ -4518,7 +4883,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
             self.structure_viewer.load_structure(self._structure_restore_path)
         except (OSError, RuntimeError, ValueError) as error:
             self._append_process_log(
-                "Falha ao restaurar a estrutura original: {}".format(error)
+                "Failed to restore the original structure: {}".format(error)
             )
             showdialog("Viewer error", str(error))
             return
@@ -4527,7 +4892,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
         self._structure_review_cancelled = True
         self.structure_review_controls.hide()
         self._append_process_log(
-            "Estrutura original restaurada no visualizador; etapa interrompida."
+            "Original structure restored in the viewer; step cancelled."
         )
         if self._structure_review_loop is not None:
             self._structure_review_loop.quit()
@@ -4568,7 +4933,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
             )
         except OSError as error:
             self._append_process_log(
-                "Não foi possível iniciar o comando: {}".format(error)
+                "Could not start command: {}".format(error)
             )
             return 127 << 8
 
@@ -4598,7 +4963,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
             self._append_process_log(pending_output)
         return_code = process.wait()
         self._append_process_log(
-            "Comando finalizado com código {}.".format(return_code)
+            "Command finished with exit code {}.".format(return_code)
         )
         return return_code << 8
 
@@ -4611,14 +4976,14 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
                 contents = log_file.read().decode("utf-8", errors="replace")
         except OSError as error:
             self._append_process_log(
-                "Não foi possível ler o log {}: {}".format(log_path, error)
+                "Could not read log {}: {}".format(log_path, error)
             )
             return
 
         self._append_process_log(
-            "Conteúdo do log GROMACS ({}){}:\n{}".format(
+            "GROMACS log contents ({}){}:\n{}".format(
                 log_path,
-                " — trecho final" if size > 65536 else "",
+                " — final section" if size > 65536 else "",
                 contents,
             )
         )
@@ -4627,19 +4992,19 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
         """Run NVT/NPT/MD through BioExcel Building Blocks only."""
         self._show_monitor_panel()
         self._append_process_log(
-            "Iniciando preparação e dinâmica de produção."
+            "Starting preparation and production dynamics."
             if run_production
-            else "Iniciando preparação dos arquivos de dinâmica."
+            else "Starting dynamics input preparation."
         )
         try:
             workdir = os.getcwd()
             params = DynamicsParams(run_production=run_production, trajectory=run_production)
             result = MolecularDynamics(params).run(workdir, BiobbRunner(binary="gmx"))
         except (RuntimeError, ValueError, OSError) as error:
-            self._append_process_log("Falha na dinâmica: {}".format(error))
+            self._append_process_log("Dynamics failed: {}".format(error))
             showdialog("Simulation failed", str(error))
             return None
-        self._append_process_log("Etapas da dinâmica concluídas.")
+        self._append_process_log("Dynamics steps completed.")
         for log_path in (
             os.path.join(workdir, "nvt.log"),
             os.path.join(workdir, "npt.log"),
@@ -4665,7 +5030,7 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
 
     def run_simulation(self):
         """Run equilibration and production through BioExcel; no queue.sh or shell execution."""
-        self._append_process_log("Solicitada execução da dinâmica de produção.")
+        self._append_process_log("Production dynamics run requested.")
         pj = str(self.sel_proj_name.text())
         dr = str(self.sel_sav_direc.text())
         result = self._run_dynamics_pipeline(run_production=True)
@@ -4688,12 +5053,12 @@ pbc       = xyz     ; Periodic Boundary Conditions (yes/no)
                     )
                 shutil.copy2(source, os.path.join(results_path, pj + suffix))
             self._append_process_log(
-                "Resultados copiados para {}.".format(results_path)
+                "Results copied to {}.".format(results_path)
             )
             showdialog("Finish", "Job has finished")
             return results_path
         except OSError as error:
-            self._append_process_log("Falha ao copiar os resultados: {}".format(error))
+            self._append_process_log("Failed to copy simulation results: {}".format(error))
             showdialog("Error", "Could not copy simulation results: {}".format(error))
             return None
 
